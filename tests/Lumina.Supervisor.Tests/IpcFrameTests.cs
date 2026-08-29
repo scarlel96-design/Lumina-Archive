@@ -128,6 +128,9 @@ public class IpcFrameTests
         var kex = Assert.Throws<SupervisorException>(() => IpcCodec.DecodeUtf8(kindNum));
         var tex = Assert.Throws<SupervisorException>(() => IpcCodec.DecodeUtf8(typeBool));
         Assert.Equal(SupervisorErrorCode.EnvelopeInvalid, kex.Code);
+        Assert.Equal(SupervisorErrorCode.EnvelopeInvalid, tex.Code);
+    }
+
     [Fact]
     public void AckRequiresNonNegativeIntegerCommandSeq()
     {

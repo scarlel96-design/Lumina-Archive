@@ -237,7 +237,6 @@ public class ResourceGovernorTests
             Assert.True(g.BudgetsExact());
         }
     }
-}
 
     private static async Task RecordAdmissionAsync(ResourceGovernor g, int id, System.Collections.Concurrent.ConcurrentQueue<int> order)
     {
