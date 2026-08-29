@@ -17,5 +17,9 @@ screenshots/
 *.log
 .grok/
 .node_modules.lock
-/.vercel/
+/vendor/cache/
+/bench/out/
+/bench/tools.local.json
+/bench/machine.local.json
+
 

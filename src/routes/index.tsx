@@ -31,8 +31,8 @@ function Home() {
         </div>
         <p className="text-sm leading-relaxed text-muted">
           브라우저에서 ZIP을 만들거나 풀지 않는다. Electron/Tauri로 대체하지도 않는다.
-          Windows MSVC와 .NET 10이 없는 이 호스트에서는 네이티브 빌드를 실행할 수 없어
-          게이트를 PASS로 쓰지 않는다.
+          G0 native는 GitHub windows-latest에서 PASS. G1 실기기 Bandizip 비교는 아직 없다.
+          이 화면은 헌법·하네스 상태만 보여 준다.
         </p>
       </section>
 

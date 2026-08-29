@@ -89,3 +89,12 @@ Format: date, status, context, decision, consequences.
 - Context: GitHub `windows-latest` has Visual Studio 18 Enterprise and CMake 4.4.2. Generator `Visual Studio 17 2022` failed: "could not find any instance of Visual Studio."
 - Decision: Default Windows presets use `Visual Studio 18 2026`. Keep `windows-x64-release-vs17` as a local fallback. CI configures `windows-x64-release` and `windows-arm64-release`.
 - Consequences: G0 native builds follow the runner that actually exists in 2026.
+
+## ADR-0012 — G1 harness authority is physical Windows only
+
+- Date: 2026-08-29
+- Status: accepted
+- Context: GitHub-hosted runners can validate parsers and 7-Zip smoke, but they are not a fixed NVMe PC with a recorded Defender/power state.
+- Decision: `authority=github-runner-not-authoritative` is allowed for harness CI. Bandizip-vs-Lumina numbers require `authority=physical-windows`. Bandizip is never vendored. Official SHA-256 pins are computed from downloaded bytes, never invented.
+- Consequences: G1 = PASS only after a lab-PC RESULTS.md fill. Until then G1 is CONDITIONAL PASS and G2 stays BLOCKED.
+

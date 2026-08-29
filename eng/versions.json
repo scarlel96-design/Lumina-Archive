@@ -5,7 +5,7 @@
   "updated": "2026-08-29",
   "product": {
     "name": "Lumina Archive",
-    "version": "0.0.0-g0",
+    "version": "0.0.0-g1",
     "channel": "dev"
   },
   "toolchains": {
@@ -31,9 +31,11 @@
       "license": "LGPL-2.1-or-later",
       "upstream": "https://www.7-zip.org/",
       "sourceUrl": "https://github.com/ip7z/7zip/releases/tag/26.02",
-      "artifact": "7z.dll",
+      "artifact": "7z2602-extra.7z",
+      "artifactUrl": "https://github.com/ip7z/7zip/releases/download/26.02/7z2602-extra.7z",
       "integration": "dynamic-load-out-of-process",
-      "sha256": "PENDING_OFFICIAL_ARTIFACT",
+      "sha256": "081df9e9311dfd9c9e0e98c1c80180b99bb51e4cb24156b5f3057fe3c259d70a",
+      "gitCommit": "f9d78aff31a5f2521ae7ddbdc97c4a8855808959",
       "modified": false
     },
     "minizipNg": {
@@ -43,7 +45,10 @@
       "license": "Zlib",
       "upstream": "https://github.com/zlib-ng/minizip-ng",
       "sourceUrl": "https://github.com/zlib-ng/minizip-ng/releases/tag/4.2.2",
-      "sha256": "PENDING_OFFICIAL_ARTIFACT",
+      "artifact": "minizip-ng-4.2.2.tar.gz",
+      "artifactUrl": "https://github.com/zlib-ng/minizip-ng/archive/refs/tags/4.2.2.tar.gz",
+      "sha256": "71af7b9799856d8b03619df3949e9c1be9703f8de0795af71399ba283cb27aac",
+      "gitCommit": "7b2387161c542fa9f427352dcdef76097d0d692b",
       "modified": false
     },
     "zlibNg": {
@@ -53,7 +58,10 @@
       "license": "Zlib",
       "upstream": "https://github.com/zlib-ng/zlib-ng",
       "sourceUrl": "https://github.com/zlib-ng/zlib-ng/releases/tag/2.3.3",
-      "sha256": "PENDING_OFFICIAL_ARTIFACT",
+      "artifact": "zlib-ng-2.3.3.tar.gz",
+      "artifactUrl": "https://github.com/zlib-ng/zlib-ng/archive/refs/tags/2.3.3.tar.gz",
+      "sha256": "f9c65aa9c852eb8255b636fd9f07ce1c406f061ec19a2e7d508b318ca0c907d1",
+      "gitCommit": "12731092979c6d07f42da27da673a9f6c7b13586",
       "modified": false
     },
     "isaL": {
@@ -63,7 +71,10 @@
       "license": "BSD-3-Clause",
       "upstream": "https://github.com/intel/isa-l",
       "sourceUrl": "https://github.com/intel/isa-l/releases/tag/v2.32.1",
-      "sha256": "PENDING_OFFICIAL_ARTIFACT",
+      "artifact": "isa-l-2.32.1.tar.gz",
+      "artifactUrl": "https://github.com/intel/isa-l/archive/refs/tags/v2.32.1.tar.gz",
+      "sha256": "d9f7179ab0e14a3db9b610fac22793854a1435e8423ec9ce07f4cbedc5f92f5e",
+      "gitCommit": "7c3479e0a9dac17f448603ec1ad64c7c625f530c",
       "modified": false,
       "optional": true,
       "arch": ["x64"]
@@ -75,7 +86,10 @@
       "license": "MIT",
       "upstream": "https://github.com/ebiggers/libdeflate",
       "sourceUrl": "https://github.com/ebiggers/libdeflate/releases/tag/v1.25",
-      "sha256": "PENDING_OFFICIAL_ARTIFACT",
+      "artifact": "libdeflate-1.25.tar.gz",
+      "artifactUrl": "https://github.com/ebiggers/libdeflate/archive/refs/tags/v1.25.tar.gz",
+      "sha256": "d11473c1ad4c57d874695e8026865e38b47116bbcb872bfc622ec8f37a86017d",
+      "gitCommit": "c8c56a20f8f621e6a966b716b31f1dedab6a41e3",
       "modified": false,
       "optional": true,
       "gatedBy": "bench/RESULTS.md"
@@ -87,7 +101,10 @@
       "license": "BSD-2-Clause",
       "upstream": "https://github.com/libarchive/libarchive",
       "sourceUrl": "https://github.com/libarchive/libarchive/releases/tag/v3.8.9",
-      "sha256": "PENDING_OFFICIAL_ARTIFACT",
+      "artifact": "libarchive-3.8.9.tar.xz",
+      "artifactUrl": "https://github.com/libarchive/libarchive/releases/download/v3.8.9/libarchive-3.8.9.tar.xz",
+      "sha256": "888c934f9d95648ecb9163dc8e23ab80a476ecb81a8f1154704a227b5b676dde",
+      "gitCommit": "27cbc7827172698143e440801fc0ba39ccb4f1f5",
       "modified": false
     },
     "zstd": {
@@ -97,7 +114,10 @@
       "license": "BSD-3-Clause OR GPL-2.0-only",
       "upstream": "https://github.com/facebook/zstd",
       "sourceUrl": "https://github.com/facebook/zstd/releases/tag/v1.5.7",
-      "sha256": "PENDING_OFFICIAL_ARTIFACT",
+      "artifact": "zstd-1.5.7.tar.gz",
+      "artifactUrl": "https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz",
+      "sha256": "eb33e51f49a15e023950cd7825ca74a4a2b43db8354825ac24fc1b7ee09e6fa3",
+      "gitCommit": "f8745da6ff1ad1e7bab384bd1f9d742439278e99",
       "modified": false
     },
     "lz4": {
@@ -107,7 +127,10 @@
       "license": "BSD-2-Clause",
       "upstream": "https://github.com/lz4/lz4",
       "sourceUrl": "https://github.com/lz4/lz4/releases/tag/v1.10.0",
-      "sha256": "PENDING_OFFICIAL_ARTIFACT",
+      "artifact": "lz4-1.10.0.tar.gz",
+      "artifactUrl": "https://github.com/lz4/lz4/releases/download/v1.10.0/lz4-1.10.0.tar.gz",
+      "sha256": "537512904744b35e232912055ccf8ec66d768639ff3abe5788d90d792ec5f48b",
+      "gitCommit": "ebb370ca83af193212df4dcbadcc5d87bc0de2f0",
       "modified": false
     },
     "xz": {
@@ -117,7 +140,10 @@
       "license": "0BSD AND LGPL-2.1-or-later AND GPL-2.0-or-later",
       "upstream": "https://github.com/tukaani-project/xz",
       "sourceUrl": "https://github.com/tukaani-project/xz/releases/tag/v5.8.3",
-      "sha256": "PENDING_OFFICIAL_ARTIFACT",
+      "artifact": "xz-5.8.3.tar.gz",
+      "artifactUrl": "https://github.com/tukaani-project/xz/releases/download/v5.8.3/xz-5.8.3.tar.gz",
+      "sha256": "3d3a1b973af218114f4f889bbaa2f4c037deaae0c8e815eec381c3d546b974a0",
+      "gitCommit": "4b73f2ec19a99ef465282fbce633e8deb33691b3",
       "modified": false
     },
     "blake3": {
@@ -127,7 +153,10 @@
       "license": "CC0-1.0 OR Apache-2.0",
       "upstream": "https://github.com/BLAKE3-team/BLAKE3",
       "sourceUrl": "https://github.com/BLAKE3-team/BLAKE3/releases/tag/1.8.7",
-      "sha256": "PENDING_OFFICIAL_ARTIFACT",
+      "artifact": "BLAKE3-1.8.7.tar.gz",
+      "artifactUrl": "https://github.com/BLAKE3-team/BLAKE3/archive/refs/tags/1.8.7.tar.gz",
+      "sha256": "c6782a28842b1c0478524ac06a4f2ede784038ee298d6e2162c0b089c4306a3c",
+      "gitCommit": "f3149ec5bb5449af877ba20377a11008ff499fa2",
       "modified": false
     }
   },
@@ -149,5 +178,5 @@
     }
   },
   "removedFromV01": ["libzip"],
-  "hashPolicy": "Fill sha256 from official release artifacts during G1. Do not invent hashes. PENDING_OFFICIAL_ARTIFACT is an explicit blocker for release, not a dummy value."
+  "hashPolicy": "SHA-256 values in this file were computed from official HTTP bodies on 2026-08-29. See eng/vendor-pins.json. Do not invent hashes. GitHub autogenerated archives additionally pin gitCommit."
 }

@@ -55,7 +55,10 @@ G0 Constitution → G1 Bench harness → G2 IPC+Supervisor → G3 7z.dll core �
 G4 Safe Extract → G5 Adaptive ZIP → G6 WinUI shell → G7 power features →
 G8 Explorer/MSIX/update → G9 RC hardening.
 
-Current phase is recorded in `docs/STATUS.md`. **This tree is G0.**
+Current phase is recorded in `docs/STATUS.md`. **This tree is G1 (bench harness).**
+G2 is blocked until G1 is PASS (physical Windows numbers) or an explicit
+CONDITIONAL PASS that names the remaining blocker.
+
 
 ## OSS ownership (no overlapping roles)
 

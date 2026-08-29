@@ -3,56 +3,38 @@
 | Field | Value |
 |---|---|
 | Spec | v0.2 |
-| Phase | **G0 — Constitution** |
+| Phase | **G1 — Reproducible Archive Benchmark Harness** |
 | Updated | 2026-08-29 |
-| Product version | 0.0.0-g0 |
-| Grok Build Linux host | MSVC still **BLOCKED BY ENVIRONMENT** (not used as evidence) |
-| Verification environment | GitHub Actions `windows-latest` |
-| **G0** | **PASS** |
-| **G1 ENTRY** | **READY** |
+| Product version | 0.0.0-g1 |
+| G0 | **PASS** ([windows-native #33242669698](https://github.com/scarlel96-design/Lumina-Archive/actions/runs/33242669698), commit `8882ab2`) |
+| **G1** | **CONDITIONAL PASS** |
+| **G2 Development Entry** | **BLOCKED** |
 
-## Evidence
+## Why not G1 = PASS
 
-Green Windows job (do not treat Linux/web as substitute):
+GitHub-hosted `windows-latest` / Ubuntu runners validated the **harness**, not Bandizip-vs-Lumina.
+A fixed physical Windows NVMe machine with recorded Defender/power/thread budget
+has **not** been run. That remains required for full G1 PASS.
 
-- Run: https://github.com/scarlel96-design/Lumina-Archive/actions/runs/33242669698
-- Commit: `8882ab2`
-- Workflow: `windows-native` / job `g0-windows`
-- Duration: 3m0s
-- Conclusion: success
+## G1 delivered
 
-| Check | Result |
-|---|---|
-| `dotnet restore LuminaArchive.sln` | PASS |
-| Domain build | PASS |
-| Supervisor build | PASS |
-| CLI build | PASS |
-| Tests build | PASS |
-| WinUI skeleton build | PASS |
-| Domain tests | PASS |
-| `cmake --preset windows-x64-release` | PASS (VS 18 2026) |
-| `cmake --preset windows-arm64-release` | PASS (configure) |
-| MSVC `lumina-engine` | PASS |
-| MSVC `lumina-preview` | PASS |
-| MSVC `lumina-shell` | PASS |
-| MSVC `lumina-7z-adapter` | PASS |
-| Constitution tests | PASS |
-| Dependency-boundary audit | PASS |
-| Packaging-boundary audit | PASS |
+- Corpus catalog + tiny/encoding/hostile fixtures
+- Runner with pinned `--threads`, warmup + N runs, median/p95
+- Parsers: 7-Zip, NanaZip, Bandizip, Lumina (`not-linked` skip)
+- Result schema + authority enum
+- Official vendor SHA-256 pins in `eng/vendor-pins.json` / `eng/versions.json` (downloaded bytes, 2026-08-29)
+- Bandizip never vendored
+- CI: `bench-harness.yml` linux/windows smoke with `github-runner-not-authoritative`
+- Lumina archive I/O **not** implemented (G3/G5)
 
-## G0 defects closed on the Windows gate
+## Unresolved
 
-1. NU1605 — pin `Microsoft.Windows.SDK.BuildTools` to `10.0.26100.4654` (WASDK 2.4.0).
-2. CS7022/CS8321 — wrap CLI `Main` in `Lumina.Cli.Program`.
-3. CMake generator — `windows-latest` is VS 18 Enterprise; presets use `Visual Studio 18 2026`.
-
-## Unresolved (not G0 blockers)
-
-- Node.js 20 deprecation annotation on `actions/checkout@v4` and setup actions (forced to Node 24). Warning only.
-- Codec SHA-256 pins remain `PENDING_OFFICIAL_ARTIFACT` (G1 vendor/hash work).
-- ARM64 native was **configured**, not cross-built as a release artifact.
+- Physical Windows RESULTS.md rows still empty
+- Silesia corpus sha256 still `PENDING_OFFICIAL_ARTIFACT` until first physical fetch
+- Codec libraries are pinned, **not linked** into `lumina-engine` (`LUMINA_ENABLE_CODECS=OFF`)
+- Node 20 deprecation warning on Actions
 
 ## Next
 
-G1 may begin only when an operator starts it. This STATUS update does **not** start G1.
-Do not implement Adaptive ZIP, codecs, production archive I/O, or product UI until G1 is explicitly opened.
+Do **not** start G2 until an operator records physical-windows JSON and this STATUS
+is updated to G1 = PASS, or an operator explicitly accepts the remaining blocker.

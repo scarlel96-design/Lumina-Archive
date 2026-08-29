@@ -1,0 +1,12 @@
+{
+  "kind": "physical-windows",
+  "label": "lab-pc-1",
+  "os": "Windows 11 24H2",
+  "cpu": "",
+  "logicalCores": 0,
+  "storage": "NVMe",
+  "powerPlan": "High performance",
+  "defenderRealtime": true,
+  "threadBudget": 8,
+  "notes": "Fill on the fixed PC. Do not commit hostnames or serials."
+}

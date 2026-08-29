@@ -1,0 +1,6 @@
+# Filename encoding cases for later G4/G7. G1 does not extract these as a product path.
+utf8-한글.txt
+utf8-日本語.txt
+utf8-中文.txt
+nfc-é.txt
+nfd-e\u0301.txt

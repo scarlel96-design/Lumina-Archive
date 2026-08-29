@@ -1,0 +1,7 @@
+{
+  "comment": "Copy to tools.local.json (gitignored). Bandizip/NanaZip stay on the physical machine.",
+  "7zip": "",
+  "nanazip": "",
+  "bandizip": "",
+  "lumina": ""
+}

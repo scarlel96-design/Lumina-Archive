@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Lumina G1 bench result",
+  "type": "object",
+  "required": [
+    "schema",
+    "authority",
+    "machine",
+    "threadBudget",
+    "warmup",
+    "runsRequested",
+    "tool",
+    "corpus",
+    "op",
+    "runs",
+    "summary"
+  ],
+  "properties": {
+    "schema": { "const": "lumina.bench.v1" },
+    "authority": {
+      "enum": [
+        "physical-windows",
+        "github-runner-not-authoritative",
+        "dev-not-authoritative"
+      ]
+    },
+    "machine": { "type": "object" },
+    "threadBudget": { "type": "integer", "minimum": 1 },
+    "warmup": { "type": "integer", "minimum": 0 },
+    "runsRequested": { "type": "integer", "minimum": 1 },
+    "tool": {
+      "type": "object",
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "enum": ["7zip", "nanazip", "bandizip", "lumina"] },
+        "version": { "type": "string" },
+        "path": { "type": "string" }
+      }
+    },
+    "corpus": { "type": "object" },
+    "op": { "enum": ["zip-create", "zip-extract", "zip-test", "7z-create"] },
+    "skipped": { "type": "boolean" },
+    "skipReason": { "type": "string" },
+    "runs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["index", "warmup", "wall_ms", "exitCode"],
+        "properties": {
+          "index": { "type": "integer" },
+          "warmup": { "type": "boolean" },
+          "wall_ms": { "type": "number" },
+          "cpu_ms": { "type": ["number", "null"] },
+          "peak_wss_bytes": { "type": ["integer", "null"] },
+          "output_bytes": { "type": ["integer", "null"] },
+          "exitCode": { "type": "integer" },
+          "hash_ok": { "type": ["boolean", "null"] }
+        }
+      }
+    },
+    "summary": { "type": "object" }
+  }
+}

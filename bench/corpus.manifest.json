@@ -1,0 +1,49 @@
+{
+  "document": "Fixed G1 corpus catalog. Large corpora are fetched, never committed.",
+  "ciDefault": ["tiny"],
+  "physicalRequired": ["silesia", "tiny", "incompressible-64m"],
+  "physicalFull": [
+    "silesia",
+    "tiny",
+    "incompressible-64m",
+    "tiny-100k",
+    "single-256m",
+    "encoding-names",
+    "hostile-paths"
+  ],
+  "items": {
+    "tiny": {
+      "purpose": "harness smoke / parser / CI",
+      "source": "committed fixtures/tiny",
+      "authority": false
+    },
+    "silesia": {
+      "purpose": "standard compression corpus",
+      "url": "https://sun.aei.polsl.pl/~sdeor/corpus/silesia.zip",
+      "note": "Fetch on physical host. Hash recorded after first successful download; do not invent.",
+      "sha256": "PENDING_OFFICIAL_ARTIFACT"
+    },
+    "incompressible-64m": {
+      "purpose": "adaptive STORE / early-abort",
+      "generate": "crypto.randomBytes(64MiB)"
+    },
+    "tiny-100k": {
+      "purpose": "metadata / small-file batching",
+      "generate": "100000 x 16-byte files",
+      "physicalOnly": true
+    },
+    "single-256m": {
+      "purpose": "streaming + large allocation",
+      "generate": "one 256MiB file",
+      "physicalOnly": true
+    },
+    "encoding-names": {
+      "purpose": "CP949/932/936/950 + UTF-8 name lists",
+      "source": "committed fixtures/encoding"
+    },
+    "hostile-paths": {
+      "purpose": "zip-slip / reserved / ADS name list — not executed as extract in G1",
+      "source": "committed fixtures/hostile"
+    }
+  }
+}

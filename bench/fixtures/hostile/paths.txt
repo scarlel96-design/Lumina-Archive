@@ -1,0 +1,12 @@
+# Hostile path list. G1 records names only. Do not extract in this phase.
+../escape.txt
+..\\escape.txt
+/tmp/abs.txt
+C:\\Windows\\abs.txt
+evil:ads.txt
+COM1
+CON
+lpt1.txt
+trailingspace.txt 
+trailingdot.txt.
+foo/../../outside.txt

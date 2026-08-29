@@ -1,0 +1,72 @@
+name: bench-harness
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  g1-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: G1 constitution + parsers + pin file checks
+        run: |
+          node --test tests/constitution/g1.test.mjs bench/scripts/parsers.test.mjs
+          node bench/scripts/verify-pins.mjs
+          node bench/scripts/summarize.mjs || true
+
+  g1-linux-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Fetch official 7-Zip 26.02 linux console (hash-verified)
+        run: node bench/scripts/fetch-vendors.mjs --id=sevenZipLinuxX64
+      - name: Extract 7zz
+        run: node bench/scripts/extract-7zip-tool.mjs
+      - name: Tiny harness smoke (NOT Bandizip evidence)
+        run: |
+          export LUMINA_7ZIP="$PWD/vendor/cache/7zip-linux/7zz"
+          node bench/scripts/run-harness.mjs \
+            --authority=github-runner-not-authoritative \
+            --tools=7zip,lumina \
+            --corpus=tiny \
+            --warmup=1 \
+            --runs=2 \
+            --threads=2 \
+            --op=zip-create
+          node bench/scripts/summarize.mjs
+          python3 - <<'PY'
+          import json, pathlib
+          doc=json.loads(pathlib.Path("bench/out/latest.json").read_text())
+          assert doc["authority"]=="github-runner-not-authoritative"
+          assert "bandizip" not in {r["tool"]["id"] for r in doc["results"]}
+          seven=next(r for r in doc["results"] if r["tool"]["id"]=="7zip")
+          assert seven["skipped"] is False
+          timed=[x for x in seven["runs"] if not x["warmup"]]
+          assert len(timed)>=2
+          lumina=next(r for r in doc["results"] if r["tool"]["id"]=="lumina")
+          assert lumina["skipped"] is True
+          print("linux smoke OK")
+          PY
+
+  g1-windows-smoke:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Fetch official 7zr + extra (hash-verified)
+        run: node bench/scripts/fetch-vendors.mjs --id=sevenZip7zr --id=sevenZipExtra
+      - name: Extract extra via 7zr
+        run: node bench/scripts/extract-7zip-tool.mjs
+      - name: Tiny harness smoke (NOT Bandizip evidence)
+        shell: pwsh
+        run: |
+          node bench/scripts/run-harness.mjs --authority=github-runner-not-authoritative --tools=7zip,lumina --corpus=tiny --warmup=1 --runs=2 --threads=2 --op=zip-create
+          node bench/scripts/summarize.mjs

@@ -1,8 +1,10 @@
 # Third-party components
 
-Runtime dependencies are pinned in [`eng/versions.json`](eng/versions.json).
-Hashes marked `PENDING_OFFICIAL_ARTIFACT` must be replaced with official
-SHA-256 before any release artifact is published.
+Runtime dependencies are pinned in [`eng/versions.json`](eng/versions.json)
+and [`eng/vendor-pins.json`](eng/vendor-pins.json). G1 filled SHA-256 from
+official downloaded bytes on 2026-08-29. Do not invent hashes.
+
+
 
 This product does **not** vendor Bandizip, WinRAR, or their resources.
 
