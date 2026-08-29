@@ -37,9 +37,10 @@ struct Ctx {
 };
 
 bool emit(Ctx& ctx, const std::string& type, const std::string& payload) {
+  /* Seq and byte order must be the same: heartbeat and G3 worker both emit. */
+  std::lock_guard<std::mutex> lock(ctx.write_mu);
   int seq = ctx.event_seq.fetch_add(1);
   auto json = lumina::ipc::make_event(kProtocolVersion, ctx.cfg.job_id, seq, type, payload);
-  std::lock_guard<std::mutex> lock(ctx.write_mu);
   return lumina::ipc::write_frame(ctx.pipe, json);
 }
 

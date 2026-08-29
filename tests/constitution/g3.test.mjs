@@ -142,3 +142,12 @@ test("secure LoadLibraryExW is used for adapter and 7z.dll", () => {
   assert.match(job, /LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR/);
   assert.equal(/LoadLibraryW\s*\(\s*L"lumina-7z-adapter/.test(job), false);
 });
+
+test("engine assigns event seq under the write mutex", () => {
+  const loop = read("native/engine/src/ipc/worker_loop.cpp");
+  const m = loop.match(/bool emit\(Ctx& ctx[\s\S]*?return lumina::ipc::write_frame/);
+  assert.ok(m, "emit()");
+  const lock = m[0].indexOf("lock_guard");
+  const seq = m[0].indexOf("event_seq.fetch_add");
+  assert.ok(lock >= 0 && seq >= 0 && lock < seq, "seq must be assigned after write_mu is held");
+});
