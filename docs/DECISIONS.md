@@ -58,8 +58,6 @@ Format: date, status, context, decision, consequences.
 - Decision: Do not ship EGG until an independently licensed implementation exists. ALZ may enter as a P1 plugin after license audit.
 - Consequences: Do not advertise “40 formats” that we have not tested.
 
-
-
 ## ADR-0008 — SHA-256 pins stay PENDING until official artifacts are hashed
 
 - Date: 2026-08-29
@@ -76,3 +74,10 @@ Format: date, status, context, decision, consequences.
 - Decision: G0 WinUI uses `WindowsPackageType=None`. Native builds only through CMake presets. MSIX returns in G8.
 - Consequences: `dotnet build LuminaArchive.sln` is a C# graph. CI still configures both Windows CMake presets.
 
+## ADR-0010 — Windows SDK BuildTools follows WASDK 2.4.0
+
+- Date: 2026-08-29
+- Status: accepted
+- Context: G0 Windows restore failed NU1605: `Microsoft.WindowsAppSDK 2.4.0` requires `Microsoft.Windows.SDK.BuildTools >= 10.0.26100.4654`, but the skeleton pinned `10.0.26100.1742`.
+- Decision: Pin BuildTools to `10.0.26100.4654`. Do not suppress NU1605.
+- Consequences: WinUI restore on windows-latest matches WASDK 2.4.0.
