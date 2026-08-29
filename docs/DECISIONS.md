@@ -81,3 +81,11 @@ Format: date, status, context, decision, consequences.
 - Context: G0 Windows restore failed NU1605: `Microsoft.WindowsAppSDK 2.4.0` requires `Microsoft.Windows.SDK.BuildTools >= 10.0.26100.4654`, but the skeleton pinned `10.0.26100.1742`.
 - Decision: Pin BuildTools to `10.0.26100.4654`. Do not suppress NU1605.
 - Consequences: WinUI restore on windows-latest matches WASDK 2.4.0.
+
+## ADR-0011 — CMake Windows presets target VS 18 2026
+
+- Date: 2026-08-29
+- Status: accepted
+- Context: GitHub `windows-latest` has Visual Studio 18 Enterprise and CMake 4.4.2. Generator `Visual Studio 17 2022` failed: "could not find any instance of Visual Studio."
+- Decision: Default Windows presets use `Visual Studio 18 2026`. Keep `windows-x64-release-vs17` as a local fallback. CI configures `windows-x64-release` and `windows-arm64-release`.
+- Consequences: G0 native builds follow the runner that actually exists in 2026.

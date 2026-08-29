@@ -4,8 +4,8 @@
   "configurePresets": [
     {
       "name": "windows-x64-release",
-      "displayName": "Windows x64 Release (MSVC)",
-      "generator": "Visual Studio 17 2022",
+      "displayName": "Windows x64 Release (MSVC / VS 18 2026)",
+      "generator": "Visual Studio 18 2026",
       "architecture": "x64",
       "binaryDir": "${sourceDir}/build/win-x64-release",
       "cacheVariables": {
@@ -15,10 +15,21 @@
     },
     {
       "name": "windows-arm64-release",
-      "displayName": "Windows ARM64 Release (MSVC)",
-      "generator": "Visual Studio 17 2022",
+      "displayName": "Windows ARM64 Release (MSVC / VS 18 2026)",
+      "generator": "Visual Studio 18 2026",
       "architecture": "ARM64",
       "binaryDir": "${sourceDir}/build/win-arm64-release",
+      "cacheVariables": {
+        "LUMINA_ENABLE_CODECS": "OFF"
+      },
+      "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
+    },
+    {
+      "name": "windows-x64-release-vs17",
+      "displayName": "Windows x64 Release (VS 17 2022 fallback)",
+      "generator": "Visual Studio 17 2022",
+      "architecture": "x64",
+      "binaryDir": "${sourceDir}/build/win-x64-release-vs17",
       "cacheVariables": {
         "LUMINA_ENABLE_CODECS": "OFF"
       },
@@ -34,6 +45,11 @@
     {
       "name": "windows-arm64-release",
       "configurePreset": "windows-arm64-release",
+      "configuration": "Release"
+    },
+    {
+      "name": "windows-x64-release-vs17",
+      "configurePreset": "windows-x64-release-vs17",
       "configuration": "Release"
     }
   ]
