@@ -5,6 +5,35 @@
 #include <iostream>
 #include <string>
 
+#ifdef _WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+static void apply_worker_mitigations() {
+  SetDefaultDllDirectories(LOAD_LIBRARY_SEARCH_SYSTEM32 | LOAD_LIBRARY_SEARCH_USER_DIRS);
+  PROCESS_MITIGATION_DEP_POLICY dep{};
+  dep.Enable = 1;
+  dep.Permanent = 1;
+  SetProcessMitigationPolicy(ProcessDEPPolicy, &dep, sizeof(dep));
+  PROCESS_MITIGATION_ASLR_POLICY aslr{};
+  aslr.EnableBottomUpRandomization = 1;
+  aslr.EnableForceRelocateImages = 1;
+  aslr.EnableHighEntropy = 1;
+  SetProcessMitigationPolicy(ProcessASLRPolicy, &aslr, sizeof(aslr));
+  PROCESS_MITIGATION_STRICT_HANDLE_CHECK_POLICY handles{};
+  handles.RaiseExceptionOnInvalidHandleReference = 1;
+  handles.HandleExceptionsPermanentlyEnabled = 1;
+  SetProcessMitigationPolicy(ProcessStrictHandleCheckPolicy, &handles, sizeof(handles));
+  PROCESS_MITIGATION_EXTENSION_POINT_DISABLE_POLICY ext{};
+  ext.DisableExtensionPoints = 1;
+  SetProcessMitigationPolicy(ProcessExtensionPointDisablePolicy, &ext, sizeof(ext));
+  PROCESS_MITIGATION_IMAGE_LOAD_POLICY img{};
+  img.NoRemoteImages = 1;
+  img.NoLowMandatoryLabelImages = 1;
+  SetProcessMitigationPolicy(ProcessImageLoadPolicy, &img, sizeof(img));
+  /* MicrosoftSignedOnly is NOT enabled: official 7z.dll is not a Microsoft binary. */
+}
+#endif
+
 // Invariant: never read passwords from argv or environment.
 static bool eq(const char* a, const char* b) { return std::string(a) == b; }
 
@@ -45,5 +74,8 @@ int main(int argc, char** argv) {
     std::cerr << "lumina-engine G2 bootstrap failed (no secret argv path)\n";
     return 2;
   }
+#ifdef _WIN32
+  apply_worker_mitigations();
+#endif
   return lumina::engine::run_worker(cfg);
 }

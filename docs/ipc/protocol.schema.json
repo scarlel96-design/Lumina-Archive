@@ -10,7 +10,7 @@
     "kind": { "enum": ["command", "event"] },
     "type": {
       "type": "string",
-      "enum": ["start", "pause", "resume", "cancel", "shutdown", "accepted", "progress", "heartbeat", "paused", "resumed", "completed", "failed", "cancelled"]
+      "enum": ["start", "pause", "resume", "cancel", "shutdown", "accepted", "progress", "heartbeat", "paused", "resumed", "completed", "failed", "cancelled", "archive_info", "entry_batch"]
     },
     "payload": { "type": "object" }
   },

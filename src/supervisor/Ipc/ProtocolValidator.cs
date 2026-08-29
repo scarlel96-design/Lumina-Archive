@@ -105,7 +105,23 @@ public static class ProtocolValidator
                     RequireEmptyOrKnown(payload, ["reason"]);
                     break;
                 case "start":
-                    RequireEmptyOrKnown(payload, ["job_kind", "secret_required", "grant", "g2_mode"]);
+                    RequireEmptyOrKnown(payload, ["job_kind", "secret_required", "grant", "g2_mode", "operation", "source_path", "format_hint"]);
+                    if (payload.TryGetProperty("operation", out var op))
+                    {
+                        if (op.ValueKind != JsonValueKind.String)
+                            throw new SupervisorException(SupervisorErrorCode.EnvelopeInvalid, "operation");
+                        if (op.GetString() == "test")
+                        {
+                            if (!payload.TryGetProperty("source_path", out var sp) || sp.ValueKind != JsonValueKind.String || string.IsNullOrEmpty(sp.GetString()))
+                                throw new SupervisorException(SupervisorErrorCode.EnvelopeInvalid, "source_path required");
+                        }
+                    }
+                    if (payload.TryGetProperty("source_path", out var source) && source.ValueKind != JsonValueKind.String)
+                        throw new SupervisorException(SupervisorErrorCode.EnvelopeInvalid, "source_path");
+                    if (payload.TryGetProperty("format_hint", out var hint) && hint.ValueKind != JsonValueKind.String)
+                        throw new SupervisorException(SupervisorErrorCode.EnvelopeInvalid, "format_hint");
+                    if (payload.TryGetProperty("g2_mode", out var g2) && g2.ValueKind != JsonValueKind.String)
+                        throw new SupervisorException(SupervisorErrorCode.EnvelopeInvalid, "g2_mode");
                     break;
             }
         }
@@ -125,10 +141,19 @@ public static class ProtocolValidator
                 case "progress":
                     RequireEmptyOrKnown(payload, ["entries_done", "entries_total", "bytes_done", "bytes_total", "rate_bps", "phase", "current_entry_display"]);
                     break;
+                case "archive_info":
+                    RequireEmptyOrKnown(payload, ["format", "item_count", "physical_size", "solid", "encrypted", "handler"]);
+                    break;
+                case "entry_batch":
+                    RequireEmptyOrKnown(payload, ["batch_index", "first_entry_index", "entries"]);
+                    if (!payload.TryGetProperty("batch_index", out var bi) || bi.ValueKind != JsonValueKind.Number)
+                        throw new SupervisorException(SupervisorErrorCode.EnvelopeInvalid, "batch_index");
+                    if (!payload.TryGetProperty("entries", out var ents) || ents.ValueKind != JsonValueKind.Array)
+                        throw new SupervisorException(SupervisorErrorCode.EnvelopeInvalid, "entries");
+                    break;
                 case "completed":
                 case "failed":
-                    // G2 workers do not emit codec terminal events. If present, fields must type-check.
-                    RequireEmptyOrKnown(payload, ["command_seq", "code", "message"]);
+                    RequireEmptyOrKnown(payload, ["command_seq", "code", "message", "items_tested", "result"]);
                     if (payload.TryGetProperty("command_seq", out var termSeq))
                         RequireNonNegativeInt(termSeq, "command_seq");
                     break;

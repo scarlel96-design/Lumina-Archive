@@ -63,7 +63,7 @@ Do not use timestamps as correlation IDs.
 Supervisor → engine commands: `start`, `pause`, `resume`, `cancel`, `shutdown`.
 
 Engine → supervisor events: `accepted`, `progress`, `heartbeat`, `paused`,
-`resumed`, `completed`, `failed`, `cancelled`.
+`resumed`, `completed`, `failed`, `cancelled`, `archive_info`, `entry_batch`.
 
 Wrong direction is `EnvelopeInvalid`. Pause is **not** observable until the
 worker emits `paused`. Resume is not Running until `resumed`.
@@ -151,3 +151,25 @@ JSON is quarantined and `JournalCorrupt` — never Succeeded.
 
 Logs may include job ID, type, seq, PID, state, failure code. They must not
 dump secrets or wholesale control JSON.
+
+## G3 start / archive events
+
+`start.payload` may include:
+
+- `g2_mode` — `"protocol-self-test"` (G2 regression; no archive I/O)
+- `operation` — `"test"` for G3 integrity test
+- `source_path` — archive path (operational data, required when operation=test)
+- `format_hint` — optional `"7z"` / `"zip"`
+- existing `job_kind`, `secret_required`, `grant`
+
+No password field. Unknown fields fail closed.
+
+G3 events (still protocol v1):
+
+- `archive_info` — `{format, item_count, physical_size, solid, encrypted}` (nulls when unknown)
+- `entry_batch` — `{batch_index, first_entry_index, entries:[...]}` serialized size ≤ 512 KiB
+- `progress` — honest callback bytes/phase
+- `completed` / `failed` — `{code, items_tested?}` ; `PasswordRequired` / `WrongPassword` / `NotArchive` / `CrcError` / ...
+
+Listing streams; it must not be a single giant frame. Paths inside entries are untrusted metadata strings, not filesystem targets.
+

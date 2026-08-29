@@ -97,6 +97,17 @@ int main() {
   bad_utf8[2] = static_cast<char>(0xFF);
   expect_fail("invalid utf-8", bad_utf8);
 
+  expect_ok("g3 test start",
+            "{\"protocol_version\":1,\"job_id\":\"abc\",\"seq\":0,\"kind\":\"command\",\"type\":\"start\","
+            "\"payload\":{\"operation\":\"test\",\"source_path\":\"C:/a.7z\",\"secret_required\":false}}",
+            false);
+  expect_fail("g3 test missing path",
+              "{\"protocol_version\":1,\"job_id\":\"abc\",\"seq\":0,\"kind\":\"command\",\"type\":\"start\","
+              "\"payload\":{\"operation\":\"test\"}}");
+  expect_fail("g3 source_path number",
+              "{\"protocol_version\":1,\"job_id\":\"abc\",\"seq\":0,\"kind\":\"command\",\"type\":\"start\","
+              "\"payload\":{\"operation\":\"test\",\"source_path\":1}}");
+
   if (g_fail) {
     std::cerr << g_fail << " native parser tests failed\n";
     return 1;

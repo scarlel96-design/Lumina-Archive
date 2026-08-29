@@ -19,6 +19,8 @@ screenshots/
 .node_modules.lock
 /.vercel/
 /vendor/cache/
+/runtime/7zip/
+/bench/out/
 /bench/out/
 /bench/tools.local.json
 /bench/machine.local.json

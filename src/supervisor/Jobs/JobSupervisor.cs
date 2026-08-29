@@ -56,6 +56,21 @@ public sealed class JobSupervisor : IAsyncDisposable
         }
     }
 
+    public async Task<Guid> StartArchiveTestAsync(string sourcePath, SecretBuffer? secret, ResourceRequest? request, CancellationToken ct, string? formatHint = null)
+    {
+        if (string.IsNullOrWhiteSpace(sourcePath))
+            throw new SupervisorException(SupervisorErrorCode.EnvelopeInvalid, "source_path");
+        var jobId = Guid.NewGuid();
+        var req = request ?? new ResourceRequest(1, 64L * 1024 * 1024, 1, 0);
+        var lease = await _governor.AcquireAsync(req, ct).ConfigureAwait(false);
+        var runtime = new JobRuntime(jobId, JobKind.Test, lease, _store, _clock, _options.EnginePath, "test", sourcePath, formatHint);
+        lock (_gate) _jobs[jobId.ToString("D")] = runtime;
+        try
+        {
+            await runtime.StartAsync(secret, ct).ConfigureAwait(false);
+            return jobId;
+        }
+
     public JobState GetState(Guid jobId)
     {
         lock (_gate)

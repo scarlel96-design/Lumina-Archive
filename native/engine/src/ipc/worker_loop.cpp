@@ -1,4 +1,5 @@
 #include "lumina/engine.hpp"
+#include "lumina/g3_job.hpp"
 #include "framing.hpp"
 #include "protocol.hpp"
 #include "named_pipe_client.hpp"
@@ -29,6 +30,10 @@ struct Ctx {
   std::atomic<Work> work{Work::Run};
   std::atomic<bool> alive{true};
   std::chrono::steady_clock::time_point started = std::chrono::steady_clock::now();
+  g3::JobCtx g3;
+  bool g3_mode = false;
+  int pause_seq = -1;
+  int resume_seq = -1;
 };
 
 bool emit(Ctx& ctx, const std::string& type, const std::string& payload) {
@@ -36,6 +41,10 @@ bool emit(Ctx& ctx, const std::string& type, const std::string& payload) {
   auto json = lumina::ipc::make_event(kProtocolVersion, ctx.cfg.job_id, seq, type, payload);
   std::lock_guard<std::mutex> lock(ctx.write_mu);
   return lumina::ipc::write_frame(ctx.pipe, json);
+}
+
+bool emit_thunk(void* user, const std::string& type, const std::string& payload) {
+  return emit(*static_cast<Ctx*>(user), type, payload);
 }
 
 void heartbeat_thread(Ctx* ctx) {
@@ -57,6 +66,16 @@ void wipe(std::vector<uint8_t>& s) {
   s.clear();
 }
 
+#ifdef _WIN32
+std::wstring utf8_to_wide(const std::string& s) {
+  if (s.empty()) return {};
+  int n = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), static_cast<int>(s.size()), nullptr, 0);
+  std::wstring w(static_cast<size_t>(n), L'\0');
+  MultiByteToWideChar(CP_UTF8, 0, s.c_str(), static_cast<int>(s.size()), w.data(), n);
+  return w;
+}
+#endif
+
 } // namespace
 
 int run_worker(const WorkerConfig& cfg) {
@@ -72,6 +91,9 @@ int run_worker(const WorkerConfig& cfg) {
   int expected_cmd = 0;
   std::thread hb;
   bool hb_started = false;
+  std::thread worker;
+  bool worker_started = false;
+  std::vector<uint8_t> secret;
 
   while (ctx.alive.load()) {
     std::string json;
@@ -85,27 +107,66 @@ int run_worker(const WorkerConfig& cfg) {
 
     if (env.type == "start") {
       if (env.secret_required) {
-        std::vector<uint8_t> secret;
         if (!lumina::ipc::receive_one_shot_secret(cfg.secret_pipe, secret, kMaxSecretBytes)) {
           emit(ctx, "failed", "{\"code\":\"SecretFrameInvalid\"}");
           break;
         }
-        wipe(secret);
       }
       std::string payload = std::string("{\"command_seq\":") + std::to_string(env.seq) + "}";
       emit(ctx, "accepted", payload);
       hb = std::thread(heartbeat_thread, &ctx);
       hb_started = true;
+      const bool g3 = env.operation == "test" && !env.source_path.empty();
+      ctx.g3_mode = g3;
+      ctx.g3.emit = emit_thunk;
+      ctx.g3.emit_user = &ctx;
+      if (g3) {
+        auto path = utf8_to_wide(env.source_path);
+        auto hint = env.format_hint;
+        worker = std::thread([&, path, hint] {
+          int cancelled = g3::run_test_job(path, hint, secret, &ctx.g3, emit_thunk, &ctx);
+          wipe(secret);
+          if (cancelled) {
+            /* cancelled event is emitted by command path if still alive */
+          }
+          ctx.alive.store(false);
+        });
+        worker_started = true;
+      } else {
+        wipe(secret);
+      }
     } else if (env.type == "pause") {
       ctx.work.store(Work::Pause);
-      emit(ctx, "paused", std::string("{\"command_seq\":") + std::to_string(env.seq) + "}");
+      ctx.pause_seq = env.seq;
+      if (ctx.g3_mode) {
+        ctx.g3.pause_seq = env.seq;
+        ctx.g3.pause_acked.store(0);
+        ctx.g3.pause.store(1);
+      } else {
+        emit(ctx, "paused", std::string("{\"command_seq\":") + std::to_string(env.seq) + "}");
+      }
     } else if (env.type == "resume") {
       ctx.work.store(Work::Run);
+      ctx.resume_seq = env.seq;
+      if (ctx.g3_mode) {
+        ctx.g3.pause.store(0);
+        g3::wake(&ctx.g3);
+      }
       emit(ctx, "resumed", std::string("{\"command_seq\":") + std::to_string(env.seq) + "}");
     } else if (env.type == "cancel") {
+      if (ctx.g3_mode) {
+        ctx.g3.cancel.store(1);
+        ctx.g3.pause.store(0);
+        g3::wake(&ctx.g3);
+      }
       emit(ctx, "cancelled", std::string("{\"command_seq\":") + std::to_string(env.seq) + "}");
       ctx.alive.store(false);
     } else if (env.type == "shutdown") {
+      if (ctx.g3_mode) {
+        ctx.g3.cancel.store(1);
+        ctx.g3.alive.store(0);
+        g3::wake(&ctx.g3);
+      }
       ctx.alive.store(false);
     } else {
       break;
@@ -113,7 +174,12 @@ int run_worker(const WorkerConfig& cfg) {
   }
 
   ctx.alive.store(false);
+  ctx.g3.alive.store(0);
+  ctx.g3.cancel.store(1);
+  g3::wake(&ctx.g3);
+  if (worker_started) worker.join();
   if (hb_started) hb.join();
+  wipe(secret);
   lumina::ipc::close_pipe(ctx.pipe);
   return 0;
 #endif

@@ -78,7 +78,7 @@ bool validate_command_payload(const std::string& type, const json& payload, Enve
   if (type == "cancel")
     return only_keys(payload, {"reason"}, error);
   if (type == "start") {
-    if (!only_keys(payload, {"job_kind", "secret_required", "grant", "g2_mode"}, error))
+    if (!only_keys(payload, {"job_kind", "secret_required", "grant", "g2_mode", "operation", "source_path", "format_hint"}, error))
       return false;
     if (payload.contains("secret_required")) {
       if (!payload["secret_required"].is_boolean()) {
@@ -97,6 +97,32 @@ bool validate_command_payload(const std::string& type, const json& payload, Enve
     }
     if (payload.contains("g2_mode") && !payload["g2_mode"].is_string()) {
       error = "g2_mode type";
+      return false;
+    }
+    if (payload.contains("g2_mode")) out.g2_mode = payload["g2_mode"].get<std::string>();
+    if (payload.contains("operation")) {
+      if (!payload["operation"].is_string()) {
+        error = "operation type";
+        return false;
+      }
+      out.operation = payload["operation"].get<std::string>();
+    }
+    if (payload.contains("source_path")) {
+      if (!payload["source_path"].is_string()) {
+        error = "source_path type";
+        return false;
+      }
+      out.source_path = payload["source_path"].get<std::string>();
+    }
+    if (payload.contains("format_hint")) {
+      if (!payload["format_hint"].is_string()) {
+        error = "format_hint type";
+        return false;
+      }
+      out.format_hint = payload["format_hint"].get<std::string>();
+    }
+    if (out.operation == "test" && out.source_path.empty()) {
+      error = "source_path required";
       return false;
     }
     return true;

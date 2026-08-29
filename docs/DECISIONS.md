@@ -146,3 +146,21 @@ Format: date, status, context, decision, consequences.
 - Decision: Vendor official `json.hpp` (SHA-256 `aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63` from downloaded bytes). IPC JSON only. Not a codec. Duplicate keys, unknown envelope fields, non-object payload, and non-boolean `secret_required` fail closed. ResourceGovernor FIFO holes are fixed in the same G2 hotfix (strict head-of-line).
 - Consequences: Native parse tests (`lumina-ipc-parse-test`) must run the real parser. G3 still does not start.
 
+## ADR-0017 — G3 official 7z.dll adapter
+
+- Date: 2026-08-29
+- Status: accepted
+- Context: `7z2602-extra.7z` was pinned as the production DLL source. Its readme states `7za.dll` is a **reduced 7z-only** library and that **`7z.dll` is the main DLL**. Extra contains `7za.dll` / `7zxa.dll` for x86/x64/arm64, not `7z.dll`. Silently substituting `7za.dll` would violate ADR-0002.
+- Decision:
+  - Production x64 `7z.dll` is extracted from official `7z2602-x64.exe` (NSIS) after SHA-256 `6745fa76dc2ea031596d8678f6f6b99c3c1b435b4164a63485adbbc7b8d82ef0`.
+  - Production ARM64 `7z.dll` is extracted from official `7z2602-arm64.exe` after SHA-256 `7c6fde79ed5e11b81c7bb6573b7962d3b6322aa5fce69c33ed19f672b55173ab`.
+  - Extraction uses pinned `7zr.exe`; the installer is never executed.
+  - Runtime binaries are fetched/staged, never committed.
+  - Interface headers are the 26.02 source commit `f9d78aff31a5f2521ae7ddbdc97c4a8855808959`, vendored as a minimal subset under `third_party/7zip-26.02/sdk`.
+  - `lumina-7z-adapter.dll` is a versioned C ABI (v1). Engine loads it from an absolute sibling path with `LoadLibraryExW` + `LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR|SYSTEM32`. Adapter loads `7z.dll` the same way.
+  - Handler discovery via `GetNumberOfFormats`/`GetHandlerProperty2`. Product-verified formats in G3: **7z** and **ZIP**. Others are `AVAILABLE_BACKEND` only.
+  - G3 is Open/List/Test. `IArchiveExtractCallback::GetStream` never creates files. Safe Extract is G4.
+  - Passwords: UTF-8 secret pipe → UTF-16 → `SysAllocString` for `ICryptoGetTextPassword`. Lumina wipes owned buffers. BSTR copies inside unmodified `7z.dll` are **not** claimed zeroized.
+- Consequences: Extra.7z remains a bench/bootstrap artifact, not the production DLL. ARM64 runtime execution is not claimed on x64 GitHub runners.
+
+

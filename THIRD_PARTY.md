@@ -25,10 +25,22 @@ This product does **not** vendor Bandizip, WinRAR, or their resources.
 
 ## 7-Zip LGPL notes
 
-Official FAQ: using the DLL/EXE requires LGPL notice and a source link.
-Copying 7-Zip sources into a wrapper DLL makes **that wrapper** LGPL/GPL.
-Therefore `native/7z-adapter` is a separate module. The unmodified `7z.dll`
-is redistributed as a distinct binary.
+Lumina uses the official unmodified **7z.dll** from 7-Zip 26.02
+(https://www.7-zip.org/ and https://github.com/ip7z/7zip/releases/tag/26.02,
+commit `f9d78aff31a5f2521ae7ddbdc97c4a8855808959`).
+
+Production x64 DLL is extracted from `7z2602-x64.exe` (not executed).
+Production ARM64 DLL is extracted from `7z2602-arm64.exe` (not executed).
+`7z2602-extra.7z` is **not** the production DLL source (`7za.dll` is reduced).
+
+Redistribution requires the 7-Zip license notice and a source offer.
+Full upstream license text: [`third_party/7zip-26.02/LICENSE.txt`](third_party/7zip-26.02/LICENSE.txt).
+
+Copying 7-Zip interface headers into `native/7z-adapter` keeps **that
+adapter** on an LGPL-compatible boundary as a separate DLL
+(`lumina-7z-adapter.dll`). Engine talks to it through a C ABI. UI and
+Explorer never load the adapter or `7z.dll`.
+
 
 ## Explicitly not included
 

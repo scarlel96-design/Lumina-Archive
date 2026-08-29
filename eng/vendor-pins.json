@@ -26,6 +26,17 @@
       "gitCommit": "f9d78aff31a5f2521ae7ddbdc97c4a8855808959"
     },
     {
+      "id": "sevenZipWinArm64",
+      "dep": "sevenZip",
+      "version": "26.02",
+      "role": "Windows ARM64 installer; production ARM64 7z.dll extracted without executing the installer",
+      "url": "https://github.com/ip7z/7zip/releases/download/26.02/7z2602-arm64.exe",
+      "artifact": "7z2602-arm64.exe",
+      "bytes": 1590118,
+      "sha256": "7c6fde79ed5e11b81c7bb6573b7962d3b6322aa5fce69c33ed19f672b55173ab",
+      "gitCommit": "f9d78aff31a5f2521ae7ddbdc97c4a8855808959"
+    },
+    {
       "id": "sevenZipLinuxX64",
       "dep": "sevenZip",
       "version": "26.02",

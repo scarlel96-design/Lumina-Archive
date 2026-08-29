@@ -16,5 +16,6 @@ jobs:
         run: node --test tests/constitution/g1.test.mjs tests/constitution/g1-physical.test.mjs tests/constitution/g1-hardening.test.mjs tests/constitution/g1-accept-baseline.test.mjs bench/scripts/parsers.test.mjs
       - name: G2 constitution tests
         run: node --test tests/constitution/g2.test.mjs
-      - name: Verify vendor pin files
+      - name: G3 constitution tests
+        run: node --test tests/constitution/g3.test.mjs
         run: node bench/scripts/verify-pins.mjs

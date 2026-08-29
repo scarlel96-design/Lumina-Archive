@@ -36,9 +36,12 @@ internal sealed class JobRuntime : IAsyncDisposable
     private int _resumeSeq = -1;
     private int _cancelSeq = -1;
     private readonly SemaphoreSlim _writeLock = new(1, 1);
+    private readonly string? _sourcePath;
+    private readonly string? _formatHint;
+    private readonly string? _operation;
     private TaskCompletionSource<bool> _accepted = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-    public JobRuntime(Guid jobId, JobKind kind, ResourceLease lease, JobJournalStore store, TimeProvider clock, string enginePath)
+    public JobRuntime(Guid jobId, JobKind kind, ResourceLease lease, JobJournalStore store, TimeProvider clock, string enginePath, string? operation = null, string? sourcePath = null, string? formatHint = null)
     {
         JobId = jobId;
         Kind = kind;
@@ -46,6 +49,9 @@ internal sealed class JobRuntime : IAsyncDisposable
         _store = store;
         _clock = clock;
         _enginePath = enginePath;
+        _operation = operation;
+        _sourcePath = sourcePath;
+        _formatHint = formatHint;
         _lastHeartbeat = clock.GetUtcNow();
         Journal = new JobJournal
         {
@@ -99,19 +105,7 @@ internal sealed class JobRuntime : IAsyncDisposable
         try
         {
             await _control.WaitForClientAsync((uint)_worker.Pid, handshake.Token).ConfigureAwait(false);
-            var startPayload = JsonSerializer.SerializeToElement(new Dictionary<string, object?>
-            {
-                ["job_kind"] = Kind.ToString(),
-                ["secret_required"] = secret is { Length: > 0 },
-                ["g2_mode"] = "protocol-self-test",
-                ["grant"] = new Dictionary<string, object?>
-                {
-                    ["cpu_threads"] = _lease!.Grant.CpuThreads,
-                    ["memory_bytes"] = _lease.Grant.MemoryBytes,
-                    ["io_slots"] = _lease.Grant.IoSlots,
-                    ["preview_slots"] = _lease.Grant.PreviewSlots,
-                },
-            });
+            var startPayload = JsonSerializer.SerializeToElement(BuildStartPayload(secret is { Length: > 0 }));
             var startSeq = NextCommandSeq();
             _startSeq = startSeq;
             var start = new IpcEnvelope(ProtocolConstants.ProtocolVersion, JobId.ToString("D"), startSeq, "command", "start", startPayload);
@@ -307,10 +301,12 @@ internal sealed class JobRuntime : IAsyncDisposable
                     break;
                 case "heartbeat":
                 case "progress":
+                case "archive_info":
+                case "entry_batch":
                     break;
             }
         }
-        if (env.Type is not ("heartbeat" or "progress"))
+        if (env.Type is not ("heartbeat" or "progress" or "archive_info" or "entry_batch"))
             Persist();
     }
 
@@ -381,6 +377,33 @@ internal sealed class JobRuntime : IAsyncDisposable
         {
             _writeLock.Release();
         }
+    }
+
+    private Dictionary<string, object?> BuildStartPayload(bool secretRequired)
+    {
+        var payload = new Dictionary<string, object?>
+        {
+            ["job_kind"] = Kind.ToString(),
+            ["secret_required"] = secretRequired,
+            ["grant"] = new Dictionary<string, object?>
+            {
+                ["cpu_threads"] = _lease!.Grant.CpuThreads,
+                ["memory_bytes"] = _lease.Grant.MemoryBytes,
+                ["io_slots"] = _lease.Grant.IoSlots,
+                ["preview_slots"] = _lease.Grant.PreviewSlots,
+            },
+        };
+        if (_operation == "test")
+        {
+            payload["operation"] = "test";
+            payload["source_path"] = _sourcePath;
+            if (!string.IsNullOrEmpty(_formatHint)) payload["format_hint"] = _formatHint;
+        }
+        else
+        {
+            payload["g2_mode"] = "protocol-self-test";
+        }
+        return payload;
     }
 
     private void ForceTerminateWorker()

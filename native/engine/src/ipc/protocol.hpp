@@ -12,6 +12,10 @@ struct Envelope {
   std::string type;
   std::string payload_json; // object text including braces
   bool secret_required = false;
+  std::string operation;
+  std::string source_path;
+  std::string format_hint;
+  std::string g2_mode;
 };
 
 bool parse_envelope(const std::string& json, Envelope& out, std::string& error);

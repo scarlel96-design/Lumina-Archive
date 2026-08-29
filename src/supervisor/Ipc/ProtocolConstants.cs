@@ -18,7 +18,7 @@ public static class ProtocolConstants
 
     public static readonly HashSet<string> Events = new(StringComparer.Ordinal)
     {
-        "accepted", "progress", "heartbeat", "paused", "resumed", "completed", "failed", "cancelled"
+        "accepted", "progress", "heartbeat", "paused", "resumed", "completed", "failed", "cancelled", "archive_info", "entry_batch"
     };
 
     public static string ControlPipeName(Guid jobId) => $"{PipeNamespace}.{jobId:D}.control";

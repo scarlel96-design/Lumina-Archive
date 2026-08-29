@@ -55,10 +55,10 @@ G0 Constitution → G1 Bench harness → G2 IPC+Supervisor → G3 7z.dll core �
 G4 Safe Extract → G5 Adaptive ZIP → G6 WinUI shell → G7 power features →
 G8 Explorer/MSIX/update → G9 RC hardening.
 
-Current phase is recorded in `docs/STATUS.md`. **G1 is PASS.**
+Current phase is recorded in `docs/STATUS.md`. **G2 is PASS.**
+G3 is IN PROGRESS. Do not start G4 in a G3 commit.
 G1 PASS is the external competitor baseline, not Lumina-vs-Bandizip.
 Lumina in G1 is `SKIPPED_NOT_LINKED` (success). Competitive compare is G5.
-G2 Development Entry is READY. Do not start G2 in the G1 closure commit.
 
 
 

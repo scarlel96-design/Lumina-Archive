@@ -87,11 +87,55 @@ jobs:
       - name: MSVC build lumina-7z-adapter
         run: cmake --build --preset windows-x64-release --target lumina-7z-adapter --config Release
 
+      - name: MSVC build lumina-7z-adapter-test
+        run: cmake --build --preset windows-x64-release --target lumina-7z-adapter-test --config Release
+
+      - name: Fetch official 7z.dll x64
+        shell: pwsh
+        run: ./eng/fetch-7zip-runtime.ps1 -Arch x64
+
+      - name: Stage 7z.dll next to engine
+        shell: pwsh
+        run: |
+          $dst = "build/win-x64-release/native/engine/Release"
+          New-Item -ItemType Directory -Force $dst | Out-Null
+          Copy-Item runtime/7zip/x64/7z.dll $dst -Force
+          Copy-Item runtime/7zip/x64/7z.dll build/win-x64-release/native/7z-adapter/Release/ -Force
+
+      - name: Adapter unit/integration (plain 7z + zip)
+        shell: pwsh
+        run: |
+          $dll = Resolve-Path runtime/7zip/x64/7z.dll
+          $exe = "build/win-x64-release/native/7z-adapter/Release/lumina-7z-adapter-test.exe"
+          & $exe $dll tests/fixtures/g3/plain.7z
+          if ($LASTEXITCODE -ne 0) { throw "plain.7z adapter test failed" }
+          & $exe $dll tests/fixtures/g3/plain.zip
+          if ($LASTEXITCODE -ne 0) { throw "plain.zip adapter test failed" }
+          & $exe $dll tests/fixtures/g3/random.bin
+          # non-archive returns 0 from adapter-test when status is NotArchive
+
+
       - name: MSVC build lumina-bench-run (G1 helper, not product)
         run: cmake --build --preset windows-x64-release --target lumina-bench-run --config Release
 
       - name: MSVC ARM64 build lumina-engine
         run: cmake --build --preset windows-arm64-release --target lumina-engine --config Release
+
+      - name: MSVC ARM64 build lumina-7z-adapter
+        run: cmake --build --preset windows-arm64-release --target lumina-7z-adapter --config Release
+
+      - name: Fetch official 7z.dll ARM64 (stage/inspect only)
+        shell: pwsh
+        run: ./eng/fetch-7zip-runtime.ps1 -Arch arm64
+
+      - name: Inspect ARM64 7z.dll PE machine
+        shell: pwsh
+        run: |
+          $bytes = [System.IO.File]::ReadAllBytes("runtime/7zip/arm64/7z.dll")
+          $pe = [BitConverter]::ToInt32($bytes, 0x3C)
+          $machine = [BitConverter]::ToUInt16($bytes, $pe + 4)
+          if ($machine -ne 0xAA64) { throw "ARM64 7z.dll machine $machine" }
+          Write-Host "ARM64 7z.dll IMAGE_FILE_MACHINE_ARM64 OK"
 
       - name: Run Supervisor tests including G2 Windows integration
         env:
@@ -99,7 +143,7 @@ jobs:
         run: dotnet test tests/Lumina.Supervisor.Tests/Lumina.Supervisor.Tests.csproj -c Release --no-restore --no-build
 
       - name: Constitution tests
-        run: node --test tests/constitution/g0.test.mjs
+        run: node --test tests/constitution/g0.test.mjs tests/constitution/g3.test.mjs
 
       - name: Dependency and packaging boundary audit
         shell: pwsh
