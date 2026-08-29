@@ -2,12 +2,12 @@ import { join, dirname } from "node:path";
 import { sha256File, fileSize } from "./common.mjs";
 import { treeManifest, manifestsEqual } from "./tree-hash.mjs";
 import { summarizeTimes } from "./stats.mjs";
-import { spawnTimed, resolveBenchRunner, emptyTelemetry } from "./telemetry.mjs";
+import { spawnTimed, resolveBenchRunner, emptyTelemetry, infrastructureOk } from "./telemetry.mjs";
 import { resolveTool, rotateTools } from "./measure-resolve.mjs";
 import { createArgs, extractArgs, extractDestPath, ensureCleanDir, createCanonicalFixture } from "./fixtures.mjs";
-import { affinityMask, extractionPolicy, COMPRESSION_THREAD_POLICY } from "./thread-policy.mjs";
+import { affinityMask, extractionPolicy, COMPRESSION_THREAD_POLICY, rotateCreateProducers } from "./thread-policy.mjs";
 
-export { resolveTool, rotateTools, extractDestPath, createCanonicalFixture, ensureCleanDir };
+export { resolveTool, rotateTools, extractDestPath, createCanonicalFixture, ensureCleanDir, rotateCreateProducers };
 export { findCached, resolveSevenZipConsole } from "./measure-resolve.mjs";
 
 
@@ -45,6 +45,7 @@ export async function measureCreate({
   const total = warmup + runsRequested;
   const times = [];
   let outputBytes = null;
+  const authoritative = authority === "physical-windows";
   for (let i = 0; i < total; i++) {
     const isWarm = i < warmup;
     const runDir = join(workRoot, "create", tool.id, corpusId, format, `run-${i}`);
@@ -55,8 +56,10 @@ export async function measureCreate({
     const run = await spawnTimed(tool.path, argv, corpusDir, {
       helper,
       affinityMask: affinityMask(threadBudget),
+      authoritative,
+      requireAffinity: authoritative,
     });
-    let valid = run.exitCode === 0;
+    let valid = sampleOk(run, authoritative) && run.exitCode === 0;
     let hash_ok = null;
     const bytes = valid ? await fileSize(archive) : null;
     if (valid && bytes) {
@@ -105,6 +108,7 @@ export async function measureExtract({
   const total = warmup + runsRequested;
   const times = [];
   const fixtureId = `${fixture.format}-by-${fixture.producer}`;
+  const authoritative = authority === "physical-windows";
   for (let i = 0; i < total; i++) {
     const isWarm = i < warmup;
     const dest = extractDestPath(workRoot, fixtureId, tool.id, i);
@@ -114,8 +118,10 @@ export async function measureExtract({
     const run = await spawnTimed(tool.path, argv, dirname(fixture.archive), {
       helper,
       affinityMask: policy.usesFixedThreadBudget ? affinityMask(threadBudget) : "0",
+      authoritative,
+      requireAffinity: authoritative && policy.usesFixedThreadBudget,
     });
-    let valid = run.exitCode === 0;
+    let valid = sampleOk(run, authoritative) && run.exitCode === 0;
     let hash_ok = false;
     if (valid) {
       hash_ok = manifestsEqual(sourceManifest, await treeManifest(dest));
@@ -147,6 +153,12 @@ function baseRecord({ authority, machine, threadBudget, warmup, runsRequested, t
   };
 }
 
+function sampleOk(run, authoritative) {
+  if (!authoritative) return true;
+  if (run.helperFailed) return false;
+  return infrastructureOk(run.telemetry, { requireAffinity: true });
+}
+
 function skipTool(tool, record) {
   if (tool.id === "lumina") {
     record.skipped = true;
@@ -169,7 +181,10 @@ function runRow(index, warmup, run, output_bytes, hash_ok, valid) {
     wall_ms: run.wall_ms,
     cpu_ms: tel.cpu_ms,
     peak_wss_bytes: tel.peak_wss_bytes,
-    peak_private_bytes: tel.peak_private_bytes ?? null,
+    peak_private_bytes: null,
+    private_usage_bytes_at_exit: tel.private_usage_bytes_at_exit ?? null,
+    launcher_ok: tel.launcher_ok === true,
+    helperFailed: run.helperFailed === true,
     read_bytes: tel.read_bytes,
     write_bytes: tel.write_bytes,
     output_bytes,
@@ -183,11 +198,15 @@ function runRow(index, warmup, run, output_bytes, hash_ok, valid) {
 function summarize(times, sourceManifest, outputBytes, record) {
   const stats = summarizeTimes(times);
   const inputBytes = sourceManifest?.files.reduce((a, f) => a + f.bytes, 0) ?? null;
+  const measured = record.runs.filter((r) => !r.warmup);
+  const validMeasured = measured.filter((r) => r.valid === true);
   return {
     ...stats,
     output_bytes: outputBytes,
     throughputMBps: stats.median && inputBytes ? inputBytes / 1e6 / (stats.median / 1000) : null,
-    hash_ok: record.runs.filter((r) => !r.warmup).every((r) => r.valid === true),
+    hash_ok: validMeasured.length === record.runsRequested && validMeasured.every((r) => r.valid === true),
+    measuredValid: validMeasured.length,
+    incomplete: validMeasured.length < record.runsRequested,
   };
 }
 

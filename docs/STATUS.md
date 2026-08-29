@@ -23,13 +23,14 @@ authoritative JSON exists.
 
 Closed in this turn:
 
-- Canonical extraction fixtures (same bytes to every extractor)
-- Unique clean extract destinations; strict path+size+SHA-256
-- `lumina-bench-run.exe` FIXED_AFFINITY + process telemetry (bench-only)
-- Physical Bandizip must be `bz.exe` 26.02/7.46 fail-closed version check
-- Silesia extract via harness 7-Zip resolver
-- G1 harness tests including hardening suite
+- Create-order rotation (`rotateCreateProducers`)
+- Fixture setup isolated from timed create/extract and warmup
+- Cache policy `hot-cache-explicit-warmup-1` (honest, not cold-cache)
+- Affinity fail-closed (no resume if SetProcessAffinityMask fails; multi-group rejected)
+- PrivateUsage named `private_usage_bytes_at_exit`; `peak_private_bytes` always null
+- Helper launcher_ok vs child exit
 
 Still required for G1 PASS: lab PC session. Do **not** start G2. Do **not**
-run physical baseline until hardening tests are green (they are, on this host).
+run physical baseline from this environment.
+
 

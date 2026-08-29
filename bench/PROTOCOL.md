@@ -37,10 +37,19 @@ On the **lab Windows PC only** (not GitHub Actions, not this Linux sandbox):
 3. `node bench/scripts/fetch-corpus.mjs` (verifies Silesia SHA-256)
 4. `node bench/scripts/run-physical-session.mjs`
 
-Create ZIP-A (7-Zip) and ZIP-B (Bandizip) once per corpus. Every extractor times
-those **same archive bytes**. Each extract run uses a clean `extract/.../run-N/`
-directory. Exit code 0 without an exact tree match is `valid=false`.
-Physical Bandizip is `bz.exe` 7.46 only.
+Create ZIP-A (7-Zip) and ZIP-B (Bandizip) once per corpus **before** timed
+create/extract. Fixture elapsed time is setup-only (not warmup, not median).
+Timed create producer order is `rotateCreateProducers` (corpus 0: 7zip→bandizip,
+corpus 1: bandizip→7zip, …). Cache policy `hot-cache-explicit-warmup-1`:
+fixture setup may precondition filesystem cache; warmup=1 is the explicit
+benchmark warmup, not the total prior accesses. Not a cold cache.
+Every extractor times those **same archive bytes**. Each extract run uses a
+clean `extract/.../run-N/` directory. Exit code 0 without an exact tree match
+is `valid=false`. Physical Bandizip is `bz.exe` 7.46 only.
+`lumina-bench-run` must apply affinity (`SetProcessAffinityMask` checked);
+failure does **not** resume the child and is not reported as FIXED_AFFINITY.
+Multi-group CPU topology is rejected. `peak_private_bytes` is always null;
+`private_usage_bytes_at_exit` is PrivateUsage at process exit.
 
 
 ## Thread policy

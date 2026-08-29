@@ -2,11 +2,20 @@
 export const COMPRESSION_THREAD_POLICY = "native-fixed-switch";
 export const EXTRACTION_THREAD_POLICY_AFFINITY = "FIXED_AFFINITY";
 export const EXTRACTION_THREAD_POLICY_AUTO = "NATIVE_AUTO";
+export const CACHE_POLICY = "hot-cache-explicit-warmup-1";
+export const CACHE_POLICY_NOTE =
+  "canonical fixture setup occurs before measured configurations and may precondition filesystem cache; warmup=1 refers to the explicit benchmark warmup count, not the total number of prior filesystem accesses";
 
 export function affinityMask(threadBudget) {
   const n = Math.max(1, Math.min(64, Number(threadBudget) || 1));
   if (n >= 64) return "0xFFFFFFFFFFFFFFFF";
   return "0x" + ((1n << BigInt(n)) - 1n).toString(16).toUpperCase();
+}
+
+export function rotateCreateProducers(producers, corpusIndex) {
+  const list = [...producers];
+  const k = ((corpusIndex % list.length) + list.length) % list.length;
+  return [...list.slice(k), ...list.slice(0, k)];
 }
 
 export function extractionPolicy(helperPath) {
@@ -28,5 +37,11 @@ export function assertNoFalseExtractThreads(record) {
     if (record.claimedFixedExtractThreads === true) {
       throw new Error("must not claim extraction used fixed threadBudget under NATIVE_AUTO");
     }
+  }
+}
+
+export function assertAffinityNotAssumed(telemetry) {
+  if (telemetry.affinity_applied === true && telemetry.launcher_ok !== true) {
+    throw new Error("FIXED_AFFINITY success cannot be claimed without launcher_ok");
   }
 }

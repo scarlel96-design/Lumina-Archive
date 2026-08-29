@@ -52,6 +52,8 @@
           "wall_ms": { "type": "number" },
           "cpu_ms": { "type": ["number", "null"] },
           "peak_wss_bytes": { "type": ["integer", "null"] },
+          "peak_private_bytes": { "type": ["integer", "null"], "description": "Always null. Peak private bytes are not measured. See private_usage_bytes_at_exit." },
+          "private_usage_bytes_at_exit": { "type": ["integer", "null"] },
           "output_bytes": { "type": ["integer", "null"] },
           "exitCode": { "type": "integer" },
           "hash_ok": { "type": ["boolean", "null"] }

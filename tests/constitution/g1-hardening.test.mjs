@@ -8,7 +8,10 @@ import { treeManifest, manifestsEqual } from "../../bench/scripts/tree-hash.mjs"
 import { extractDestPath, extractArgs, createArgs } from "../../bench/scripts/fixtures.mjs";
 import { assertPhysicalBandizipPath, assertExactVersion, parseSevenZipVersion } from "../../bench/scripts/versions-detect.mjs";
 import { extractionPolicy, EXTRACTION_THREAD_POLICY_AUTO, EXTRACTION_THREAD_POLICY_AFFINITY, assertNoFalseExtractThreads } from "../../bench/scripts/thread-policy.mjs";
-import { emptyTelemetry } from "../../bench/scripts/telemetry.mjs";
+import { emptyTelemetry, infrastructureOk } from "../../bench/scripts/telemetry.mjs";
+import { rotateCreateProducers, CACHE_POLICY, assertAffinityNotAssumed } from "../../bench/scripts/thread-policy.mjs";
+import { summarizeTimes } from "../../bench/scripts/stats.mjs";
+
 
 
 test("strict manifestsEqual uses full relative path not basename", async () => {
@@ -100,8 +103,97 @@ test("Windows corpus extractor uses harness 7-Zip resolver not unzip-only", () =
 
 test("telemetry schema supports values or explicit null reasons", () => {
   const t = emptyTelemetry("not on Windows");
-  for (const k of ["wall_ms", "cpu_ms", "peak_wss_bytes", "read_bytes", "write_bytes", "exitCode"]) {
+  for (const k of ["wall_ms", "cpu_ms", "peak_wss_bytes", "read_bytes", "write_bytes", "exitCode", "private_usage_bytes_at_exit", "peak_private_bytes", "launcher_ok"]) {
     assert.ok(k in t);
   }
+  assert.equal(t.peak_private_bytes, null);
+  assert.equal(t.launcher_ok, false);
   assert.equal(t.unsupportedReason, "not on Windows");
 });
+
+test("create producer order rotates deterministically", () => {
+  const p = ["7zip", "bandizip"];
+  assert.deepEqual(rotateCreateProducers(p, 0), ["7zip", "bandizip"]);
+  assert.deepEqual(rotateCreateProducers(p, 1), ["bandizip", "7zip"]);
+  assert.deepEqual(rotateCreateProducers(p, 2), ["7zip", "bandizip"]);
+  assert.deepEqual(rotateCreateProducers(p, 3), ["bandizip", "7zip"]);
+});
+
+test("fixture setup is not counted as warmup or measured stats", () => {
+  const session = readFileSync(join(import.meta.dirname, "../../bench/scripts/run-physical-session.mjs"), "utf8");
+  assert.match(session, /canonical-fixtures/);
+  assert.match(session, /timed-create/);
+  assert.match(session, /fixtureSetupRuns/);
+  assert.equal(session.includes("warmup += 1"), false);
+  const runs = [
+    { warmup: true, valid: true, wall_ms: 9, note: "explicit warmup" },
+    { warmup: false, valid: true, wall_ms: 10 },
+    { warmup: false, valid: true, wall_ms: 11 },
+    { warmup: false, valid: true, wall_ms: 12 },
+    { warmup: false, valid: true, wall_ms: 13 },
+    { warmup: false, valid: true, wall_ms: 14 },
+  ];
+  const measured = runs.filter((r) => !r.warmup && r.valid).map((r) => r.wall_ms);
+  assert.equal(measured.length, 5);
+  const s = summarizeTimes(measured);
+  assert.equal(s.n, 5);
+  assert.equal(measured.includes(9), false);
+});
+
+test("affinity failure cannot be reported as FIXED_AFFINITY success", () => {
+  const tel = { launcher_ok: false, affinity_applied: true };
+  assert.throws(() => assertAffinityNotAssumed(tel));
+  assert.equal(infrastructureOk({ launcher_ok: false, wall_ms: 1, exitCode: 0, affinity_applied: true }, { requireAffinity: true }), false);
+  assert.equal(infrastructureOk({ launcher_ok: true, wall_ms: 1, exitCode: 0, affinity_applied: false }, { requireAffinity: true }), false);
+  assert.equal(infrastructureOk({ launcher_ok: true, wall_ms: 1, exitCode: 0, affinity_applied: true }, { requireAffinity: true }), true);
+  const cpp = readFileSync(join(import.meta.dirname, "../../native/bench-run/src/main.cpp"), "utf8");
+  assert.match(cpp, /if \(!SetProcessAffinityMask/);
+  assert.match(cpp, /killSuspended/);
+  assert.match(cpp, /kHelperAffinity/);
+  const resumeIdx = cpp.indexOf("ResumeThread");
+  const setIdx = cpp.indexOf("SetProcessAffinityMask");
+  assert.ok(setIdx > 0 && resumeIdx > setIdx);
+});
+
+test("helper infrastructure failure is distinct from child exit", () => {
+  const cpp = readFileSync(join(import.meta.dirname, "../../native/bench-run/src/main.cpp"), "utf8");
+  assert.match(cpp, /launcher_ok/);
+  assert.match(cpp, /helper_error/);
+  const js = readFileSync(join(import.meta.dirname, "../../bench/scripts/telemetry.mjs"), "utf8");
+  assert.match(js, /helperFailed/);
+  assert.match(js, /childExitCode/);
+});
+
+test("PrivateUsage is not stored as peak_private_bytes", () => {
+  const cpp = readFileSync(join(import.meta.dirname, "../../native/bench-run/src/main.cpp"), "utf8");
+  assert.match(cpp, /private_usage_bytes_at_exit/);
+  assert.equal(/appendUll\(j, "peak_private_bytes"/.test(cpp), false);
+  assert.match(cpp, /peak_private_bytes/);
+  const tel = emptyTelemetry("x");
+  assert.equal(tel.peak_private_bytes, null);
+});
+
+test("optional telemetry failure is null plus error not zero", () => {
+  const t = emptyTelemetry("GetProcessIoCounters failed");
+  assert.equal(t.read_bytes, null);
+  assert.equal(t.write_bytes, null);
+  assert.equal(t.cpu_ms, null);
+  assert.notEqual(t.read_bytes, 0);
+  assert.ok(t.telemetryErrors.length >= 1);
+});
+
+test("authoritative wall timing failure invalidates the sample", () => {
+  assert.equal(infrastructureOk({ launcher_ok: true, wall_ms: null, exitCode: 0, affinity_applied: true }, { requireAffinity: true }), false);
+  const cpp = readFileSync(join(import.meta.dirname, "../../native/bench-run/src/main.cpp"), "utf8");
+  assert.match(cpp, /kHelperQpc/);
+  assert.match(cpp, /QueryPerformanceFrequency/);
+});
+
+test("physical session records create order and honest cache policy", () => {
+  const session = readFileSync(join(import.meta.dirname, "../../bench/scripts/run-physical-session.mjs"), "utf8");
+  assert.match(session, /createOrderByCorpus/);
+  assert.match(session, /rotateCreateProducers/);
+  assert.match(session, /CACHE_POLICY/);
+  assert.equal(CACHE_POLICY, "hot-cache-explicit-warmup-1");
+});
+
