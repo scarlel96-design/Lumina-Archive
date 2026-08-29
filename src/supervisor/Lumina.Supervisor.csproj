@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Description>Worker spawn, Job Object, IPC, budgets. Implementation starts G2.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\domain\Lumina.Domain.csproj" />
+  </ItemGroup>
+</Project>

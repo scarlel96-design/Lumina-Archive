@@ -1,0 +1,10 @@
+<Window
+    x:Class="Lumina.Win.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Lumina Archive">
+    <Grid>
+        <TextBlock Margin="24"
+                   Text="G0 skeleton. Product UI is Phase G6. This process must not load archive codecs." />
+    </Grid>
+</Window>

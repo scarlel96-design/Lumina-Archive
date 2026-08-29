@@ -1,0 +1,14 @@
+name: constitution
+on:
+  push:
+  pull_request:
+jobs:
+  g0:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: G0 constitution tests
+        run: node --test tests/constitution/g0.test.mjs

@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.19041.0</TargetPlatformMinVersion>
+    <UseWinUI>true</UseWinUI>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <EnableMsixTooling>false</EnableMsixTooling>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <Platforms>x64;ARM64</Platforms>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <RootNamespace>Lumina.Win</RootNamespace>
+    <Nullable>enable</Nullable>
+    <Description>WinUI 3 G0 shell. Must not reference native codec packages. MSIX is G8.</Description>
+    <DefaultItemExcludes>$(DefaultItemExcludes);Package.appxmanifest</DefaultItemExcludes>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.4.0" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\domain\Lumina.Domain.csproj" />
+    <ProjectReference Include="..\..\src\supervisor\Lumina.Supervisor.csproj" />
+  </ItemGroup>
+  <!-- Packaging boundary: web preview / npm / Vite never enter this project. -->
+  <ItemGroup>
+    <Content Remove="..\..\package.json" />
+    <None Remove="..\..\package.json" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,153 @@
+{
+  "$schema": "./versions.schema.json",
+  "document": "Lumina Archive dependency pin lock",
+  "spec": "v0.2",
+  "updated": "2026-08-29",
+  "product": {
+    "name": "Lumina Archive",
+    "version": "0.0.0-g0",
+    "channel": "dev"
+  },
+  "toolchains": {
+    "dotnet": {
+      "sdk": "10.0.11",
+      "sdkRestoreFloor": "10.0.100",
+      "sdkRollForward": "latestFeature",
+      "targetFramework": "net10.0-windows10.0.19041.0",
+      "targetPlatformMinVersion": "10.0.19041.0",
+      "csharp": "13.0",
+      "rollForward": "latestPatch"
+    },
+    "windowsAppSdk": "2.4.0",
+    "cmake": "3.28",
+    "msvc": "14.44",
+    "cppStandard": "20"
+  },
+  "dependencies": {
+    "sevenZip": {
+      "id": "7-zip",
+      "version": "26.02",
+      "role": "unmodified official DLL for 7z/RAR-read/generic formats/fallback",
+      "license": "LGPL-2.1-or-later",
+      "upstream": "https://www.7-zip.org/",
+      "sourceUrl": "https://github.com/ip7z/7zip/releases/tag/26.02",
+      "artifact": "7z.dll",
+      "integration": "dynamic-load-out-of-process",
+      "sha256": "PENDING_OFFICIAL_ARTIFACT",
+      "modified": false
+    },
+    "minizipNg": {
+      "id": "minizip-ng",
+      "version": "4.2.2",
+      "role": "ZIP container, AES, ZIP64, raw-entry, edit, recovery",
+      "license": "Zlib",
+      "upstream": "https://github.com/zlib-ng/minizip-ng",
+      "sourceUrl": "https://github.com/zlib-ng/minizip-ng/releases/tag/4.2.2",
+      "sha256": "PENDING_OFFICIAL_ARTIFACT",
+      "modified": false
+    },
+    "zlibNg": {
+      "id": "zlib-ng",
+      "version": "2.3.3",
+      "role": "Deflate streaming fast path (x64 and ARM64)",
+      "license": "Zlib",
+      "upstream": "https://github.com/zlib-ng/zlib-ng",
+      "sourceUrl": "https://github.com/zlib-ng/zlib-ng/releases/tag/2.3.3",
+      "sha256": "PENDING_OFFICIAL_ARTIFACT",
+      "modified": false
+    },
+    "isaL": {
+      "id": "isa-l",
+      "version": "2.32.1",
+      "role": "optional x64 Deflate/CRC accelerator, runtime CPU detect",
+      "license": "BSD-3-Clause",
+      "upstream": "https://github.com/intel/isa-l",
+      "sourceUrl": "https://github.com/intel/isa-l/releases/tag/v2.32.1",
+      "sha256": "PENDING_OFFICIAL_ARTIFACT",
+      "modified": false,
+      "optional": true,
+      "arch": ["x64"]
+    },
+    "libdeflate": {
+      "id": "libdeflate",
+      "version": "1.25",
+      "role": "benchmark-gated whole-buffer Deflate/Inflate",
+      "license": "MIT",
+      "upstream": "https://github.com/ebiggers/libdeflate",
+      "sourceUrl": "https://github.com/ebiggers/libdeflate/releases/tag/v1.25",
+      "sha256": "PENDING_OFFICIAL_ARTIFACT",
+      "modified": false,
+      "optional": true,
+      "gatedBy": "bench/RESULTS.md"
+    },
+    "libarchive": {
+      "id": "libarchive",
+      "version": "3.8.9",
+      "role": "TAR/cpio/ISO/secondary read formats — never ZIP hot path",
+      "license": "BSD-2-Clause",
+      "upstream": "https://github.com/libarchive/libarchive",
+      "sourceUrl": "https://github.com/libarchive/libarchive/releases/tag/v3.8.9",
+      "sha256": "PENDING_OFFICIAL_ARTIFACT",
+      "modified": false
+    },
+    "zstd": {
+      "id": "zstd",
+      "version": "1.5.7",
+      "role": "tar.zst / ZIP method codec",
+      "license": "BSD-3-Clause OR GPL-2.0-only",
+      "upstream": "https://github.com/facebook/zstd",
+      "sourceUrl": "https://github.com/facebook/zstd/releases/tag/v1.5.7",
+      "sha256": "PENDING_OFFICIAL_ARTIFACT",
+      "modified": false
+    },
+    "lz4": {
+      "id": "lz4",
+      "version": "1.10.0",
+      "role": "LZ4 frame codec",
+      "license": "BSD-2-Clause",
+      "upstream": "https://github.com/lz4/lz4",
+      "sourceUrl": "https://github.com/lz4/lz4/releases/tag/v1.10.0",
+      "sha256": "PENDING_OFFICIAL_ARTIFACT",
+      "modified": false
+    },
+    "xz": {
+      "id": "xz",
+      "version": "5.8.3",
+      "role": "xz/lzma",
+      "license": "0BSD AND LGPL-2.1-or-later AND GPL-2.0-or-later",
+      "upstream": "https://github.com/tukaani-project/xz",
+      "sourceUrl": "https://github.com/tukaani-project/xz/releases/tag/v5.8.3",
+      "sha256": "PENDING_OFFICIAL_ARTIFACT",
+      "modified": false
+    },
+    "blake3": {
+      "id": "blake3",
+      "version": "1.8.7",
+      "role": "Checksum Center fast hash",
+      "license": "CC0-1.0 OR Apache-2.0",
+      "upstream": "https://github.com/BLAKE3-team/BLAKE3",
+      "sourceUrl": "https://github.com/BLAKE3-team/BLAKE3/releases/tag/1.8.7",
+      "sha256": "PENDING_OFFICIAL_ARTIFACT",
+      "modified": false
+    }
+  },
+  "referenceOnly": {
+    "nanaZip": {
+      "version": "6.5.1800",
+      "role": "Windows UX/compat regression reference — not a runtime dependency",
+      "upstream": "https://github.com/M2Team/NanaZip"
+    },
+    "peaZip": {
+      "version": "11.2.0",
+      "role": "cross-platform UX/compat reference — not a runtime dependency",
+      "upstream": "https://github.com/peazip/PeaZip"
+    },
+    "bandizipBaseline": {
+      "version": "7.46",
+      "released": "2026-08-21",
+      "role": "performance and safety competitive baseline — never vendored"
+    }
+  },
+  "removedFromV01": ["libzip"],
+  "hashPolicy": "Fill sha256 from official release artifacts during G1. Do not invent hashes. PENDING_OFFICIAL_ARTIFACT is an explicit blocker for release, not a dummy value."
+}
