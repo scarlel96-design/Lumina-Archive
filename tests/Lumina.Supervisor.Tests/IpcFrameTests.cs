@@ -65,7 +65,7 @@ public class IpcFrameTests
     [Fact]
     public void EventInCommandDirectionRejectedByValidator()
     {
-        var json = Encoding.UTF8.GetBytes("{\"protocol_version\":1,\"job_id\":\"a\",\"seq\":0,\"kind\":\"event\",\"type\":\"heartbeat\",\"payload\":{}}");
+        var json = Encoding.UTF8.GetBytes("{\"protocol_version\":1,\"job_id\":\"a\",\"seq\":0,\"kind\":\"event\",\"type\":\"heartbeat\",\"payload\":{\"uptime_ms\":1,\"state\":\"running\"}}");
         var env = IpcCodec.DecodeUtf8(json);
         Assert.Throws<SupervisorException>(() => ProtocolValidator.ValidateDirection(env, "command"));
     }
@@ -94,7 +94,7 @@ public class IpcFrameTests
     [Fact]
     public void JobIdMismatch()
     {
-        var json = Encoding.UTF8.GetBytes("{\"protocol_version\":1,\"job_id\":\"a\",\"seq\":0,\"kind\":\"event\",\"type\":\"accepted\",\"payload\":{}}");
+        var json = Encoding.UTF8.GetBytes("{\"protocol_version\":1,\"job_id\":\"a\",\"seq\":0,\"kind\":\"event\",\"type\":\"accepted\",\"payload\":{\"command_seq\":0}}");
         var env = IpcCodec.DecodeUtf8(json);
         Assert.Throws<SupervisorException>(() => ProtocolValidator.ValidateJobId(env, "b"));
     }
