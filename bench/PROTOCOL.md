@@ -30,20 +30,18 @@ close G1. That was the circular dependency: G1 → Lumina I/O → G3/G5 → G2 �
 
 ## Physical machine (required for G1 = PASS)
 
-1. Copy `machine.example.json` → `machine.local.json` (gitignored).
-2. Fill: CPU, logical cores, RAM, NVMe/storage, Windows version, power mode,
-   Defender realtime, `threadBudget`.
-3. Install **outside the repo**:
-   - 7-Zip 26.02 (official)
-   - Bandizip 7.46 (never committed)
-   - NanaZip 6.5.1800 when available
-4. Fetch Silesia with `fetch-corpus` and record SHA-256 from downloaded bytes.
-5. `node bench/scripts/verify-pins.mjs`
-6. `node bench/scripts/run-harness.mjs --authority=physical-windows --tools=7zip,bandizip,nanazip --corpus=tiny,silesia,incompressible-64m --warmup=1 --runs=5 --threads=<fixed> --op=zip-create`
-7. Repeat `--op=zip-extract` on archives from step 6.
-8. Warm-up 1 + ≥5 timed runs. Store median, p95, hashes.
-9. Lumina, if listed, must appear as `SKIPPED_NOT_LINKED`.
-10. Only then fill the **competitor** rows in `RESULTS.md`.
+On the **lab Windows PC only** (not GitHub Actions, not this Linux sandbox):
+
+1. `pwsh bench/scripts/collect-machine.ps1` → `bench/machine.local.json`
+2. Install outside the repo: 7-Zip 26.02, Bandizip 7.46; NanaZip optional
+3. `node bench/scripts/fetch-corpus.mjs` (verifies Silesia SHA-256)
+4. `node bench/scripts/run-physical-session.mjs`
+
+That script refuses `GITHUB_ACTIONS` and non-Windows hosts. Warmup=1, runs=5,
+threadBudget=`min(8, logicalProcessors)`, cache policy `hot-after-single-warmup`.
+Tool order rotates per corpus. Lumina is `SKIPPED_NOT_LINKED`.
+Raw JSON: `bench/results/<session-id>/`. `RESULTS.md` is generated, never hand-edited.
+
 
 ## G5 Competitive Performance Gate (later)
 

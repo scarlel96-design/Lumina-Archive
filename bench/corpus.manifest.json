@@ -2,15 +2,7 @@
   "document": "Fixed G1 corpus catalog. Large corpora are fetched, never committed.",
   "ciDefault": ["tiny"],
   "physicalRequired": ["silesia", "tiny", "incompressible-64m"],
-  "physicalFull": [
-    "silesia",
-    "tiny",
-    "incompressible-64m",
-    "tiny-100k",
-    "single-256m",
-    "encoding-names",
-    "hostile-paths"
-  ],
+  "pins": "eng/corpus-pins.json",
   "items": {
     "tiny": {
       "purpose": "harness smoke / parser / CI",
@@ -20,22 +12,17 @@
     "silesia": {
       "purpose": "standard compression corpus",
       "url": "https://sun.aei.polsl.pl/~sdeor/corpus/silesia.zip",
-      "note": "Fetch on physical host. Hash recorded after first successful download; do not invent.",
-      "sha256": "PENDING_OFFICIAL_ARTIFACT"
+      "filename": "silesia.zip",
+      "bytes": 68182744,
+      "sha256": "0626e25f45c0ffb5dc801f13b7c82a3b75743ba07e3a71835a41e3d9f63c77af",
+      "fetched": "2026-08-29",
+      "note": "SHA-256 from downloaded bytes. Zip is not committed."
     },
     "incompressible-64m": {
       "purpose": "adaptive STORE / early-abort",
-      "generate": "crypto.randomBytes(64MiB)"
-    },
-    "tiny-100k": {
-      "purpose": "metadata / small-file batching",
-      "generate": "100000 x 16-byte files",
-      "physicalOnly": true
-    },
-    "single-256m": {
-      "purpose": "streaming + large allocation",
-      "generate": "one 256MiB file",
-      "physicalOnly": true
+      "generate": "deterministic SHA-256 stream",
+      "seed": "lumina-g1-incompressible-64m-v1",
+      "bytes": 67108864
     },
     "encoding-names": {
       "purpose": "CP949/932/936/950 + UTF-8 name lists",

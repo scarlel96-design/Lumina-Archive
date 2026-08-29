@@ -23,6 +23,7 @@ Full **G1 = PASS** requires all of:
 8. Median and p95 recorded
 9. Output hashes / correctness checks PASS
 10. Silesia artifact SHA-256 resolved from **downloaded bytes**
+    (`eng/corpus-pins.json`, 2026-08-29)
 11. Results use `authority=physical-windows`
 12. Bandizip binary remains **outside** the repository
 

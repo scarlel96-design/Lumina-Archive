@@ -81,7 +81,7 @@ test("G1 must not require Lumina I/O (circular dependency closed)", () => {
 });
 
 test("Lumina skip code is SKIPPED_NOT_LINKED", () => {
-  const harness = read("bench/scripts/run-harness.mjs");
+  const harness = read("bench/scripts/measure.mjs");
   const parser = read("bench/scripts/parsers.mjs");
   assert.match(harness, /SKIPPED_NOT_LINKED/);
   assert.match(parser, /SKIPPED_NOT_LINKED/);

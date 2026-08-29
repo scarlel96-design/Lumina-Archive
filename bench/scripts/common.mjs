@@ -56,7 +56,7 @@ export function forbidAuthoritativeGithub(authority, tools) {
   if (authority === "physical-windows") return;
   if (tools.includes("bandizip")) {
     throw new Error(
-      "Bandizip-vs-Lumina numbers are forbidden on github-hosted/dev runs. Use a physical Windows host.",
+      "Bandizip competitor baseline is forbidden on github-hosted/dev runs. Use run-physical-session.mjs on a lab PC.",
     );
   }
 }

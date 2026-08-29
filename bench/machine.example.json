@@ -1,13 +1,19 @@
 {
   "kind": "physical-windows",
-  "label": "lab-pc-1",
-  "os": "Windows 11 24H2",
+  "os": "Microsoft Windows 11 Pro",
+  "windowsBuild": "26100",
   "cpu": "",
-  "logicalCores": 0,
+  "physicalCores": 0,
+  "logicalProcessors": 0,
   "ramGiB": 0,
-  "storage": "NVMe",
-  "powerPlan": "High performance",
+  "filesystem": "NTFS",
+  "sourceDrive": "C:",
+  "destinationDrive": "C:",
+  "storage": "",
+  "acState": "AC",
+  "powerPlan": "",
   "defenderRealtime": true,
+  "arch": "AMD64",
   "threadBudget": 8,
-  "notes": "Fill on the fixed PC. Do not commit hostnames or serials."
+  "notes": "Fill via bench/scripts/collect-machine.ps1. Do not commit hostnames or serials."
 }
