@@ -11,8 +11,9 @@ import { extractionPolicy, EXTRACTION_THREAD_POLICY_AUTO, EXTRACTION_THREAD_POLI
 import { emptyTelemetry, infrastructureOk } from "../../bench/scripts/telemetry.mjs";
 import { rotateCreateProducers, CACHE_POLICY, assertAffinityNotAssumed } from "../../bench/scripts/thread-policy.mjs";
 import { summarizeTimes } from "../../bench/scripts/stats.mjs";
-
-
+import { verificationSpawnOpts, decideCreateValid } from "../../bench/scripts/measure.mjs";
+import { validatePhysicalSession, PINNED_SILESIA } from "../../bench/scripts/accept-baseline.mjs";
+import { statusNote, renderResultsMd } from "../../bench/scripts/render-results.mjs";
 
 test("strict manifestsEqual uses full relative path not basename", async () => {
   const root = await mkdtemp(join(tmpdir(), "lumina-m-"));
@@ -136,7 +137,6 @@ test("Bandizip parser does not accept arbitrary 7.46 text", () => {
   assert.throws(() => assertExactVersion(null, "7.46", "Bandizip"));
 });
 
-
 test("Windows corpus extractor uses harness 7-Zip resolver not unzip-only", () => {
   const fetchSrc = readFileSync(join(import.meta.dirname, "../../bench/scripts/fetch-corpus.mjs"), "utf8");
   assert.match(fetchSrc, /resolveSevenZipConsole/);
@@ -241,3 +241,69 @@ test("physical session records create order and honest cache policy", () => {
   assert.equal(CACHE_POLICY, "hot-cache-explicit-warmup-1");
 });
 
+test("post-create verification must not use affinity mask 0", () => {
+  const opts = verificationSpawnOpts({ helper: "lumina-bench-run.exe", threadBudget: 8, authoritative: true });
+  assert.notEqual(opts.affinityMask, "0");
+  assert.ok(opts.affinityMask && opts.affinityMask !== "0");
+  assert.equal(opts.requireAffinity, true);
+  const src = readFileSync(join(import.meta.dirname, "../../bench/scripts/measure.mjs"), "utf8");
+  assert.match(src, /verificationSpawnOpts/);
+  assert.equal(/extractArgs\([^;]+runDir,\s*\{\s*helper\s*\}/.test(src), false);
+});
+
+test("create sample valid only after verification tree match", () => {
+  assert.equal(decideCreateValid({ createOk: true, verifyInfraOk: true, verifyExit0: true, treeMatch: true }), true);
+  assert.equal(decideCreateValid({ createOk: true, verifyInfraOk: false, verifyExit0: true, treeMatch: true }), false);
+  assert.equal(decideCreateValid({ createOk: true, verifyInfraOk: true, verifyExit0: false, treeMatch: true }), false);
+  assert.equal(decideCreateValid({ createOk: true, verifyInfraOk: true, verifyExit0: true, treeMatch: false }), false);
+});
+
+function rec(over) {
+  return {
+    schema: "lumina.bench.v1",
+    authority: "physical-windows",
+    runsRequested: 5,
+    tool: { id: "7zip", version: "26.02" },
+    corpus: { id: "tiny" },
+    op: "zip-create",
+    skipped: false,
+    runs: [
+      { warmup: true, valid: true },
+      { warmup: false, valid: true },
+      { warmup: false, valid: true },
+      { warmup: false, valid: true },
+      { warmup: false, valid: true },
+      { warmup: false, valid: true },
+    ],
+    summary: { n: 5, measuredValid: 5, incomplete: false, hash_ok: true },
+    ...over,
+  };
+}
+
+test("invalid mandatory configuration rejects G1-BASELINE", () => {
+  const session = { authority: "physical-windows" };
+  const bad = rec({ summary: { n: 0, measuredValid: 0, incomplete: true, hash_ok: false } });
+  const v = validatePhysicalSession({ session, results: [bad], silesiaSha256: PINNED_SILESIA });
+  assert.equal(v.accepted, false);
+  assert.ok(v.reasons.length > 0);
+  const good = rec({});
+  const ok = validatePhysicalSession({ session, results: [good], silesiaSha256: PINNED_SILESIA });
+  assert.equal(ok.accepted, true);
+});
+
+test("RESULTS.md renders once from all.json and labels INCOMPLETE", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "lumina-r-"));
+  const incomplete = rec({
+    summary: { n: 0, measuredValid: 0, incomplete: true, hash_ok: false, median: null, p95: null },
+  });
+  assert.equal(statusNote(incomplete), "INCOMPLETE");
+  const session = { id: "t", authority: "physical-windows", cachePolicy: "hot-cache-explicit-warmup-1", threadBudget: 8 };
+  await writeFile(join(dir, "all.json"), JSON.stringify({ session, results: [incomplete] }));
+  await writeFile(join(dir, "7zip-tiny-zip-create.json"), JSON.stringify(incomplete));
+  await renderResultsMd(dir, session, { writeRepoCopy: false });
+  const md = readFileSync(join(dir, "RESULTS.md"), "utf8");
+  const hits = md.split("INCOMPLETE").length - 1;
+  assert.equal(hits, 1);
+  assert.equal(/\| ok \|/.test(md), false);
+  await rm(dir, { recursive: true, force: true });
+});

@@ -22,6 +22,23 @@ export function buildArgs(tool, opName, archive, inputDir, threadBudget, destDir
   throw new Error(`no argv for ${tool.id} ${opName}`);
 }
 
+export function verificationSpawnOpts({ helper, threadBudget, authoritative }) {
+  const mask = affinityMask(threadBudget);
+  if (authoritative && (!mask || mask === "0")) {
+    throw new Error("post-create verification must not use affinity mask 0");
+  }
+  return {
+    helper,
+    affinityMask: mask,
+    authoritative,
+    requireAffinity: Boolean(authoritative),
+  };
+}
+
+export function decideCreateValid({ createOk, verifyInfraOk, verifyExit0, treeMatch }) {
+  return Boolean(createOk && verifyInfraOk && verifyExit0 && treeMatch === true);
+}
+
 export async function measureCreate({
   authority,
   machine,
@@ -62,20 +79,47 @@ export async function measureCreate({
     let valid = sampleOk(run, authoritative) && run.exitCode === 0;
     let hash_ok = null;
     const bytes = valid ? await fileSize(archive) : null;
+    let verification = { attempted: false };
     if (valid && bytes) {
       await sha256File(archive);
       outputBytes = bytes;
       const dest = join(runDir, "verify-x");
       await ensureCleanDir(dest);
-      const xRun = await spawnTimed(tool.path, extractArgs(tool, archive, dest), runDir, { helper });
-      if (xRun.exitCode !== 0) valid = false;
-      else {
-        hash_ok = manifestsEqual(sourceManifest, await treeManifest(dest));
-        valid = hash_ok;
+      const xRun = await spawnTimed(
+        tool.path,
+        extractArgs(tool, archive, dest),
+        runDir,
+        verificationSpawnOpts({ helper, threadBudget, authoritative }),
+      );
+      const verifyInfraOk = sampleOk(xRun, authoritative);
+      const verifyExit0 = xRun.exitCode === 0;
+      let treeMatch = false;
+      if (verifyInfraOk && verifyExit0) {
+        treeMatch = manifestsEqual(sourceManifest, await treeManifest(dest));
       }
-    } else valid = false;
+      hash_ok = treeMatch === true;
+      valid = decideCreateValid({
+        createOk: true,
+        verifyInfraOk,
+        verifyExit0,
+        treeMatch,
+      });
+      verification = {
+        attempted: true,
+        launcher_ok: xRun.telemetry?.launcher_ok === true,
+        helperFailed: xRun.helperFailed === true,
+        exitCode: xRun.exitCode,
+        affinity_applied: xRun.telemetry?.affinity_applied === true,
+        affinityMask: xRun.telemetry?.affinityMask ?? null,
+        hash_ok,
+        error: valid ? null : xRun.helperFailed ? "verification helper failed" : hash_ok ? null : "tree mismatch or extract failed",
+      };
+    } else {
+      valid = false;
+      verification = { attempted: false, error: "create did not succeed; verification skipped" };
+    }
     if (!isWarm && valid) times.push(run.wall_ms);
-    record.runs.push(runRow(i, isWarm, run, bytes, hash_ok, valid));
+    record.runs.push({ ...runRow(i, isWarm, run, bytes, hash_ok, valid), verification });
   }
   record.summary = summarize(times, sourceManifest, outputBytes, record);
   return record;

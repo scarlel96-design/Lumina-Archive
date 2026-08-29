@@ -14,7 +14,7 @@
 | Lumina in G1 | **SKIPPED_NOT_LINKED** (expected; not a failure) |
 | Silesia SHA-256 | **RESOLVED** from downloaded bytes (`eng/corpus-pins.json`) |
 | G1 circular dependency | **RESOLVED** (ADR-0013) |
-| G1 freeze candidate | **bz.exe banner parser** (supersedes `8ece4a0`; SHA in final report after CI) |
+| G1 freeze candidate | superseded `6d5ea0e` (create verify affinity-mask 0; baseline fail-open; RESULTS duplicate). Next freeze after this harness fix + CI. |
 
 ## Why not G1 = PASS
 

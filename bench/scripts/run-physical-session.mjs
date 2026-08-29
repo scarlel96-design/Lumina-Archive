@@ -18,7 +18,7 @@ import { createCanonicalFixture } from "./fixtures.mjs";
 import { resolveBenchRunner } from "./telemetry.mjs";
 import { assertPhysicalTools, detectInstalledVersion } from "./versions-detect.mjs";
 import { EXTRACTION_THREAD_POLICY_AFFINITY, CACHE_POLICY, CACHE_POLICY_NOTE } from "./thread-policy.mjs";
-import { renderResultsMd } from "./render-results.mjs";
+import { validatePhysicalSession } from "./accept-baseline.mjs";
 
 const authority = "physical-windows";
 rejectGithubAsPhysical(authority);
@@ -165,6 +165,10 @@ await writeJson(join(sessionDir, "session.json"), session);
 await writeJson(join(sessionDir, "all.json"), { session, results: all });
 await renderResultsMd(sessionDir, session);
 
+const silesia = (await readJson(join(ROOT, "eng/corpus-pins.json"))).silesiaZip.sha256;
+const validation = validatePhysicalSession({ session, results: all, silesiaSha256: silesia });
+await writeJson(join(sessionDir, "validation.json"), validation);
+
 const fingerprintSrc = {
   cpu: machine.cpu,
   storage: machine.storage,
@@ -174,16 +178,29 @@ const fingerprintSrc = {
   cachePolicy,
   extractionThreadPolicy: EXTRACTION_THREAD_POLICY_AFFINITY,
   schema: "lumina.bench.v1",
-  silesia: (await readJson(join(ROOT, "eng/corpus-pins.json"))).silesiaZip.sha256,
+  silesia,
   tools: { sevenZip: seven.detectedVersion, bandizip: bandi.detectedVersion },
 };
 const fingerprint = createHash("sha256").update(JSON.stringify(fingerprintSrc)).digest("hex");
-await writeJson(join(sessionDir, "G1-BASELINE.json"), {
+const freeze = {
   baselineId: `G1-${sessionId}`,
   machineFingerprint: fingerprint,
   harnessCommit,
   sessionId,
   authority,
-  silesiaSha256: fingerprintSrc.silesia,
-});
+  silesiaSha256: silesia,
+  accepted: validation.accepted,
+};
+
+if (!validation.accepted) {
+  await writeJson(join(sessionDir, "G1-BASELINE-INVALID.json"), { ...freeze, reasons: validation.reasons });
+  console.error("G1 physical session completed with invalid mandatory configurations.");
+  console.error("Baseline NOT accepted.");
+  for (const r of validation.reasons) console.error("-", r);
+  process.exit(1);
+}
+
+await writeJson(join(sessionDir, "G1-BASELINE.json"), freeze);
+await writeJson(join(BENCH, "G1-BASELINE.json"), freeze);
 console.log(sessionDir);
+
