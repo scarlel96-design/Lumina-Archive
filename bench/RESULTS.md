@@ -1,10 +1,11 @@
 # Bench results
 
-No competitive numbers yet. G1 fills this table **only** from a
-`authority=physical-windows` JSON run on a fixed NVMe PC.
+G1 fills **competitor** rows only from `authority=physical-windows` JSON
+on a fixed NVMe PC. Lumina is `SKIPPED_NOT_LINKED` until G5.
 
-Do **not** copy GitHub Actions timings here as Bandizip-vs-Lumina evidence.
-You must not claim “faster than Bandizip” until the marketing gate in the spec is met.
+Do **not** copy GitHub Actions timings here as a competitor baseline.
+You must not claim “faster than Bandizip” until the **marketing** gate
+(not G1) in the spec is met. Lumina-vs-Bandizip is the **G5** gate.
 
 ## Authoritative physical Windows (empty)
 
@@ -13,7 +14,7 @@ You must not claim “faster than Bandizip” until the marketing gate in the sp
 | 7-Zip | 26.02 | — | — | — | — | — | — | — | — | not run on lab PC |
 | NanaZip | 6.5.1800 | — | — | — | — | — | — | — | — | not run on lab PC |
 | Bandizip | 7.46 | — | — | — | — | — | — | — | — | not run on lab PC |
-| Lumina | 0.0.0-g1 | — | — | — | — | — | — | — | — | engine not linked (G1 skip) |
+| Lumina | 0.0.0-g1 | — | — | — | — | — | — | — | — | SKIPPED_NOT_LINKED (expected in G1) |
 
 ## CI / dev harness (not evidence)
 

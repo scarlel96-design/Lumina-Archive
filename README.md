@@ -7,7 +7,7 @@ the product.
 
 | Now | Next |
 |---|---|
-| Phase G1 — Bench harness (CONDITIONAL PASS) | Phase G2 — blocked until physical Windows RESULTS |
+| Phase G1 — Bench harness (CONDITIONAL PASS) | Phase G2 — blocked until physical 7-Zip/Bandizip baseline |
 
 Read [AGENTS.md](AGENTS.md), [docs/LUMINA_SPEC_v0.2.md](docs/LUMINA_SPEC_v0.2.md),
 [docs/STATUS.md](docs/STATUS.md).

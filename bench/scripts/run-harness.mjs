@@ -228,7 +228,7 @@ for (const corpusId of corpusIds) {
 
     if (tool.id === "lumina") {
       record.skipped = true;
-      record.skipReason = "G1: lumina-engine codecs are not linked";
+      record.skipReason = "SKIPPED_NOT_LINKED";
       results.push(record);
       continue;
     }

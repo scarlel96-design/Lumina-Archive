@@ -31,8 +31,8 @@ function Home() {
         </div>
         <p className="text-sm leading-relaxed text-muted">
           브라우저에서 ZIP을 만들거나 풀지 않는다. Electron/Tauri로 대체하지도 않는다.
-          G0 native는 GitHub windows-latest에서 PASS. G1 실기기 Bandizip 비교는 아직 없다.
-          이 화면은 헌법·하네스 상태만 보여 준다.
+          G0 native는 GitHub windows-latest에서 PASS. G1은 실기기 7-Zip/Bandizip
+          baseline이 필요하다. Lumina 비교는 G5이며 지금은 SKIPPED_NOT_LINKED가 정답이다.
         </p>
       </section>
 

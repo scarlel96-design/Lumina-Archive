@@ -4,6 +4,7 @@ Reproducible measurement only. No Adaptive ZIP. No product UI. No codec link.
 
 | Path | Role |
 |---|---|
+| `../docs/BENCHMARKING.md` | G1 vs G5 gate split |
 | `PROTOCOL.md` | authority + physical-machine checklist |
 | `corpus.manifest.json` | fixed corpora |
 | `result.schema.json` | JSON records |

@@ -116,9 +116,14 @@ Transparency: System / Tinted / Solid. Accessibility settings win.
 Warm-up 1 + ≥5 runs, median and p95. Thread budget fixed. Same PC/SSD/power/
 Defender state vs 7-Zip 26.02, NanaZip 6.5.1800, Bandizip 7.46.
 
+**G1** records that external baseline only. Lumina is `SKIPPED_NOT_LINKED`.
+**G5** is the Lumina-vs-Bandizip competitive gate on the same harness.
+See `docs/BENCHMARKING.md`. Do not require Lumina I/O to close G1.
+
 Marketing “faster than Bandizip” additionally requires ZIP create geometric
 mean ≥ 1.05× and eligible parallel extract geometric mean ≥ 1.00× across the
-fixed corpus — no cherry-picks.
+fixed corpus — no cherry-picks. G1 does not authorize that sentence.
+
 
 ## License
 

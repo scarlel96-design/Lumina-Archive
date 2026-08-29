@@ -10,6 +10,7 @@ const read = (p) => readFileSync(join(root, p), "utf8");
 test("G1 required files exist", () => {
   for (const p of [
     "bench/PROTOCOL.md",
+    "docs/BENCHMARKING.md",
     "bench/README.md",
     "bench/RESULTS.md",
     "bench/corpus.manifest.json",
@@ -56,11 +57,34 @@ test("RESULTS.md has no invented timings and forbids marketing", () => {
   assert.equal(/geometric mean/.test(text.toLowerCase()) && /1\.05/.test(text), false);
 });
 
-test("PROTOCOL forbids GitHub runner as Bandizip evidence", () => {
+test("PROTOCOL forbids GitHub runner as competitor baseline", () => {
   const text = read("bench/PROTOCOL.md");
   assert.match(text, /physical-windows/);
   assert.match(text, /Never/);
   assert.match(text, /github-runner-not-authoritative/);
+  assert.match(text, /SKIPPED_NOT_LINKED/);
+  assert.match(text, /MUST NOT be required for G1 PASS/i);
+});
+
+test("G1 must not require Lumina I/O (circular dependency closed)", () => {
+  const bench = read("docs/BENCHMARKING.md");
+  const status = read("docs/STATUS.md");
+  const adr = read("docs/DECISIONS.md");
+  assert.match(bench, /Lumina is not required for G1 PASS/);
+  assert.match(bench, /G5 — Competitive Performance Gate/);
+  assert.match(bench, /SKIPPED_NOT_LINKED/);
+  assert.match(status, /SKIPPED_NOT_LINKED/);
+  assert.match(status, /circular dependency/);
+  assert.match(status, /RESOLVED/);
+  assert.match(adr, /ADR-0013/);
+  assert.equal(/G1.*requires Lumina archive I\/O/i.test(status), false);
+});
+
+test("Lumina skip code is SKIPPED_NOT_LINKED", () => {
+  const harness = read("bench/scripts/run-harness.mjs");
+  const parser = read("bench/scripts/parsers.mjs");
+  assert.match(harness, /SKIPPED_NOT_LINKED/);
+  assert.match(parser, /SKIPPED_NOT_LINKED/);
 });
 
 test("CMake still forbids codec enablement", () => {

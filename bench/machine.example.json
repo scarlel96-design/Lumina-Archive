@@ -4,6 +4,7 @@
   "os": "Windows 11 24H2",
   "cpu": "",
   "logicalCores": 0,
+  "ramGiB": 0,
   "storage": "NVMe",
   "powerPlan": "High performance",
   "defenderRealtime": true,

@@ -64,6 +64,6 @@ export function parseLumina(stdout, stderr = "", exitCode = 0) {
     engine: identity?.engine ?? (notLinked ? "not-linked" : null),
     ok: exitCode === 0 && !notLinked,
     skipped: notLinked,
-    skipReason: notLinked ? "G1: lumina-engine codecs are not linked" : undefined,
+    skipReason: notLinked ? "SKIPPED_NOT_LINKED" : undefined,
   };
 }

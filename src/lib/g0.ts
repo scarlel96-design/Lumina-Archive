@@ -3,7 +3,7 @@ export const G0 = {
   spec: "v0.2",
   product: "Lumina Archive",
   verdict: "G1 CONDITIONAL PASS",
-  native: "G0 PASS on windows-latest; G1 physical PC not run",
+  native: "G0 PASS; G1 waits on physical competitor baseline, not Lumina I/O",
   baseline: "Bandizip 7.46",
   stack: [
     { layer: "Lumina.Win", tech: "C# / .NET 10.0.11 / WinUI 3 / WASDK 2.4.0" },
@@ -28,7 +28,7 @@ export const G0 = {
     "암호는 argv/환경변수/일반 로그에 넣지 않는다. 생산 경로는 7z.dll 콜백.",
     "UI와 Explorer에 파서를 로드하지 않는다.",
     "아카이브 경로는 전부 불신 입력이다.",
-    "성능 주장은 bench/RESULTS.md 숫자만 사용한다. GitHub runner는 Bandizip 증거가 아니다.",
+    "성능 주장은 bench/RESULTS.md 숫자만 사용한다. G1은 외부 baseline이다. Lumina 비교는 G5.",
     "Gate가 PASS가 아니면 다음 Phase로 가지 않는다.",
   ],
   phases: [

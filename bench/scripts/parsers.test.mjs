@@ -42,6 +42,7 @@ test("parse Lumina not-linked", () => {
   const p = parseLumina('{"product":"Lumina Archive","version":"0.0.0-g1","engine":"not-linked"}\n', "", 0);
   assert.equal(p.skipped, true);
   assert.equal(p.engine, "not-linked");
+  assert.equal(p.skipReason, "SKIPPED_NOT_LINKED");
 });
 
 test("reject password argv", () => {

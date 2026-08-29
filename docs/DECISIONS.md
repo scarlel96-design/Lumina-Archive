@@ -93,8 +93,20 @@ Format: date, status, context, decision, consequences.
 ## ADR-0012 — G1 harness authority is physical Windows only
 
 - Date: 2026-08-29
-- Status: accepted
+- Status: superseded by ADR-0013
 - Context: GitHub-hosted runners can validate parsers and 7-Zip smoke, but they are not a fixed NVMe PC with a recorded Defender/power state.
-- Decision: `authority=github-runner-not-authoritative` is allowed for harness CI. Bandizip-vs-Lumina numbers require `authority=physical-windows`. Bandizip is never vendored. Official SHA-256 pins are computed from downloaded bytes, never invented.
-- Consequences: G1 = PASS only after a lab-PC RESULTS.md fill. Until then G1 is CONDITIONAL PASS and G2 stays BLOCKED.
+- Decision: `authority=github-runner-not-authoritative` is allowed for harness CI. Competitor baseline numbers require `authority=physical-windows`. Bandizip is never vendored. Official SHA-256 pins are computed from downloaded bytes, never invented.
+- Consequences: Originally stated G1 PASS after lab-PC RESULTS including Bandizip-vs-Lumina. That mixed G5 into G1 and is corrected by ADR-0013.
+
+## ADR-0013 — G1 does not require Lumina I/O; competitive compare is G5
+
+- Date: 2026-08-29
+- Status: accepted
+- Context: G1 full PASS had required a physical Bandizip-vs-Lumina run while `PROTOCOL.md` correctly said Lumina archive I/O is unlinked until G3/G5, and G2 was blocked on G1 PASS. That is a cycle: G1 → Lumina I/O → G3/G5 → G2 → G1.
+- Decision:
+  - G1 PASS = harness tests + Linux/Windows smoke + physical Windows **external** baseline (7-Zip 26.02, Bandizip 7.46, NanaZip when available). Lumina row must be `SKIPPED_NOT_LINKED` and that skip is success.
+  - Bandizip-vs-Lumina competitive benchmark is the **G5 Competitive Performance Gate**, using the same machine/corpus/versions/thread budget/harness.
+  - Marketing “faster than Bandizip” remains a separate claim, not authorized by G1.
+- Consequences: G2 may start after G1 PASS without any Lumina codec. G1 is still CONDITIONAL PASS until the physical competitor session exists. See `docs/BENCHMARKING.md`.
+
 
