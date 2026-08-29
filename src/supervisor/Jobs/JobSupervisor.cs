@@ -70,6 +70,13 @@ public sealed class JobSupervisor : IAsyncDisposable
             await runtime.StartAsync(secret, ct).ConfigureAwait(false);
             return jobId;
         }
+        catch
+        {
+            await runtime.DisposeAsync().ConfigureAwait(false);
+            lock (_gate) _jobs.Remove(jobId.ToString("D"));
+            throw;
+        }
+    }
 
     public JobState GetState(Guid jobId)
     {
