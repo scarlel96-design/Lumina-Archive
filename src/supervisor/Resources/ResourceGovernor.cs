@@ -29,6 +29,7 @@ public sealed class ResourceGovernor
     public int PreviewBudget { get; }
 
     public int CpuAvailable { get { lock (_gate) return _cpuAvailable; } }
+    public int WaiterCount { get { lock (_gate) return _waiters.Count; } }
 
     public async Task<ResourceLease> AcquireAsync(ResourceRequest request, CancellationToken cancellationToken)
     {
@@ -40,21 +41,28 @@ public sealed class ResourceGovernor
         var waiter = new Waiter(request, cancellationToken);
         lock (_gate)
         {
-            if (TryReserveUnlocked(request))
+            if (_waiters.Count == 0 && TryReserveUnlocked(request))
                 return new ResourceLease(this, ToGrant(request));
             _waiters.Enqueue(waiter);
         }
 
-        try
-        {
-            await waiter.Tcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
-            return new ResourceLease(this, ToGrant(request));
-        }
-        catch
+        using (cancellationToken.Register(() =>
         {
             waiter.Cancel();
             lock (_gate) DrainWaitersUnlocked();
-            throw;
+        }))
+        {
+            try
+            {
+                await waiter.Tcs.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+                return new ResourceLease(this, ToGrant(request));
+            }
+            catch
+            {
+                waiter.Cancel();
+                lock (_gate) DrainWaitersUnlocked();
+                throw;
+            }
         }
     }
 
@@ -74,18 +82,19 @@ public sealed class ResourceGovernor
 
     private void DrainWaitersUnlocked()
     {
-        var remaining = new Queue<Waiter>();
         while (_waiters.Count > 0)
         {
-            var w = _waiters.Dequeue();
-            if (w.IsCancelled)
+            var head = _waiters.Peek();
+            if (head.IsCancelled)
+            {
+                _waiters.Dequeue();
                 continue;
-            if (TryReserveUnlocked(w.Request))
-                w.Tcs.TrySetResult(true);
-            else
-                remaining.Enqueue(w);
+            }
+            if (!TryReserveUnlocked(head.Request))
+                return;
+            _waiters.Dequeue();
+            head.Tcs.TrySetResult(true);
         }
-        while (remaining.Count > 0) _waiters.Enqueue(remaining.Dequeue());
     }
 
     private bool TryReserveUnlocked(ResourceRequest request)
@@ -113,7 +122,7 @@ public sealed class ResourceGovernor
         public ResourceRequest Request { get; }
         public CancellationToken Ct { get; }
         public TaskCompletionSource<bool> Tcs { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        public bool IsCancelled => Ct.IsCancellationRequested || Tcs.Task.IsCompleted;
+        public bool IsCancelled => Ct.IsCancellationRequested || Tcs.Task.IsCanceled || Tcs.Task.IsFaulted;
         public void Cancel() => Tcs.TrySetCanceled(Ct);
     }
 }

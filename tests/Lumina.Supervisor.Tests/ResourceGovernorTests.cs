@@ -96,4 +96,86 @@ public class ResourceGovernorTests
         (await waitIo).Dispose();
         (await waitPrev).Dispose();
     }
+
+    [Fact]
+    public async Task StrictFifoSmallRequestCannotBypassLargeHead()
+    {
+        var g = new ResourceGovernor(cpu: 4, memoryBytes: 1000, ioSlots: 4, previewSlots: 1);
+        var a = await g.AcquireAsync(new ResourceRequest(3, 10, 1, 0), CancellationToken.None);
+        var b = await g.AcquireAsync(new ResourceRequest(1, 10, 1, 0), CancellationToken.None);
+        var first = g.AcquireAsync(new ResourceRequest(4, 10, 1, 0), CancellationToken.None);
+        var second = g.AcquireAsync(new ResourceRequest(1, 10, 1, 0), CancellationToken.None);
+        await Task.Delay(20);
+        Assert.False(first.IsCompleted);
+        Assert.False(second.IsCompleted);
+        b.Dispose();
+        await Task.Delay(20);
+        Assert.False(first.IsCompleted);
+        Assert.False(second.IsCompleted);
+        Assert.Equal(1, g.CpuAvailable);
+        a.Dispose();
+        var grantedFirst = await first;
+        Assert.Equal(4, grantedFirst.Grant.CpuThreads);
+        Assert.False(second.IsCompleted);
+        grantedFirst.Dispose();
+        using var grantedSecond = await second;
+        Assert.Equal(1, grantedSecond.Grant.CpuThreads);
+    }
+
+    [Fact]
+    public async Task NewRequestJoinsQueueWhenWaitersExist()
+    {
+        var g = new ResourceGovernor(cpu: 1, memoryBytes: 100, ioSlots: 1, previewSlots: 1);
+        var held = await g.AcquireAsync(new ResourceRequest(1, 10, 1, 0), CancellationToken.None);
+        var first = g.AcquireAsync(new ResourceRequest(1, 10, 1, 0), CancellationToken.None);
+        await Task.Delay(10);
+        var second = g.AcquireAsync(new ResourceRequest(1, 10, 1, 0), CancellationToken.None);
+        await Task.Delay(10);
+        Assert.Equal(2, g.WaiterCount);
+        held.Dispose();
+        using var a = await first;
+        Assert.False(second.IsCompleted);
+        a.Dispose();
+        using var b = await second;
+        Assert.Equal(1, b.Grant.CpuThreads);
+    }
+
+    [Fact]
+    public async Task CancellingHeadUnblocksNextWaiter()
+    {
+        var g = new ResourceGovernor(cpu: 1, memoryBytes: 100, ioSlots: 1, previewSlots: 1);
+        var held = await g.AcquireAsync(new ResourceRequest(1, 10, 1, 0), CancellationToken.None);
+        using var cts = new CancellationTokenSource();
+        var first = g.AcquireAsync(new ResourceRequest(1, 10, 1, 0), cts.Token);
+        var second = g.AcquireAsync(new ResourceRequest(1, 10, 1, 0), CancellationToken.None);
+        await Task.Delay(15);
+        cts.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => first);
+        held.Dispose();
+        using var next = await second;
+        Assert.Equal(1, next.Grant.CpuThreads);
+    }
+
+    [Fact]
+    public async Task ManyWaitersPreserveAdmissionOrder()
+    {
+        var g = new ResourceGovernor(cpu: 1, memoryBytes: 10_000, ioSlots: 1, previewSlots: 1);
+        var held = await g.AcquireAsync(new ResourceRequest(1, 1, 1, 0), CancellationToken.None);
+        var order = new System.Collections.Concurrent.ConcurrentQueue<int>();
+        var tasks = new List<Task>();
+        for (var i = 0; i < 40; i++)
+        {
+            var id = i;
+            tasks.Add(RecordAdmissionAsync(g, id, order));
+        }
+        held.Dispose();
+        await Task.WhenAll(tasks);
+        Assert.Equal(Enumerable.Range(0, 40), order.ToArray());
+    }
+
+    private static async Task RecordAdmissionAsync(ResourceGovernor g, int id, System.Collections.Concurrent.ConcurrentQueue<int> order)
+    {
+        using var lease = await g.AcquireAsync(new ResourceRequest(1, 1, 1, 0), CancellationToken.None);
+        order.Enqueue(id);
+    }
 }

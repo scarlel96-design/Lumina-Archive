@@ -72,6 +72,12 @@ jobs:
       - name: MSVC build lumina-engine
         run: cmake --build --preset windows-x64-release --target lumina-engine --config Release
 
+      - name: MSVC build lumina-ipc-parse-test
+        run: cmake --build --preset windows-x64-release --target lumina-ipc-parse-test --config Release
+
+      - name: Run native IPC JSON parser tests
+        run: .\build\win-x64-release\native\engine\Release\lumina-ipc-parse-test.exe
+
       - name: MSVC build lumina-preview
         run: cmake --build --preset windows-x64-release --target lumina-preview --config Release
 

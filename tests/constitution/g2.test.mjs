@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
@@ -27,6 +28,8 @@ test("G2 required files exist", () => {
     "src/supervisor/Recovery/JobJournalStore.cs",
     "src/supervisor/Resources/ResourceGovernor.cs",
     "native/engine/src/ipc/worker_loop.cpp",
+    "native/engine/src/ipc/protocol_test.cpp",
+    "third_party/nlohmann/json.hpp",
     "docs/IPC.md",
     "bench/G1-BASELINE.json",
   ]) {
@@ -74,4 +77,43 @@ test("engine argv still refuses passwords", () => {
   const main = read("native/engine/src/main.cpp");
   assert.match(main, /never read passwords from argv/);
   assert.equal(/password/i.test(main.split("never read passwords from argv")[1] || "password"), false);
+  assert.match(main, /strtol/);
+  assert.equal(/std::stoi/.test(main), false);
+});
+
+test("native protocol uses nlohmann json not handwritten Parser", () => {
+  const proto = read("native/engine/src/ipc/protocol.cpp");
+  assert.match(proto, /nlohmann\/json\.hpp/);
+  assert.equal(/struct Parser/.test(proto), false);
+  assert.equal(/secret_required":true/.test(proto), false);
+});
+
+test("ResourceGovernor drains from queue head", () => {
+  const gov = read("src/supervisor/Resources/ResourceGovernor.cs");
+  assert.match(gov, /Peek\(\)/);
+  assert.match(gov, /_waiters\.Count == 0 && TryReserveUnlocked/);
+});
+
+test("TerminateJobObject result is checked", () => {
+  const job = read("src/supervisor/Process/WindowsJobObject.cs");
+  assert.match(job, /TryTerminate/);
+  assert.match(job, /GetLastWin32Error/);
+  assert.match(job, /JobObjectTerminateFailed/);
+});
+
+test("native parser tests actually run", () => {
+  const exe = "/tmp/lumina-g2-ipc-parse-test";
+  const r = spawnSync("g++", [
+    "-std=c++20", "-O1",
+    "-I", join(root, "third_party"),
+    "-I", join(root, "native/engine/include"),
+    "-I", join(root, "native/engine/src"),
+    join(root, "native/engine/src/ipc/protocol.cpp"),
+    join(root, "native/engine/src/ipc/protocol_test.cpp"),
+    "-o", exe,
+  ], { encoding: "utf8" });
+  assert.equal(r.status, 0, r.stderr || r.stdout);
+  const run = spawnSync(exe, { encoding: "utf8" });
+  assert.equal(run.status, 0, run.stderr || run.stdout);
+  assert.match(run.stdout, /PASS/);
 });

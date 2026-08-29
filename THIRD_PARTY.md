@@ -20,6 +20,7 @@ This product does **not** vendor Bandizip, WinRAR, or their resources.
 | LZ4 | 1.10.0 | BSD-2-Clause | codec | no | ok |
 | XZ Utils | 5.8.3 | 0BSD / LGPL / GPL mix | xz/lzma | no | confirm binary license set |
 | BLAKE3 | 1.8.7 | CC0-1.0 OR Apache-2.0 | checksum | no | ok |
+| nlohmann/json | 3.12.0 | MIT | native IPC JSON only | no | G2; not a codec |
 | .NET 10 / WinUI 3 / WASDK 2.4.0 | pin in versions.json | Microsoft | UI | n/a | ok |
 
 ## 7-Zip LGPL notes

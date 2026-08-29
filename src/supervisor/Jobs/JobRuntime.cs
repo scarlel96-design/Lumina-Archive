@@ -135,13 +135,13 @@ internal sealed class JobRuntime : IAsyncDisposable
         catch (SupervisorException)
         {
             FailInfrastructure(WorkerFailureCode.WorkerLaunchFailed);
-            _worker?.Job.Terminate(1);
+            _worker?.Job.TryTerminate(1, out _);
             throw;
         }
         catch (Exception ex)
         {
             FailInfrastructure(WorkerFailureCode.HandshakeTimeout);
-            _worker?.Job.Terminate(1);
+            _worker?.Job.TryTerminate(1, out _);
             throw new SupervisorException(SupervisorErrorCode.HandshakeTimeout, "handshake failed", ex);
         }
     }
@@ -175,7 +175,7 @@ internal sealed class JobRuntime : IAsyncDisposable
             if (_loop is not null) await _loop.WaitAsync(ProtocolConstants.ShutdownGrace);
         }
         catch { /* swallow on dispose */ }
-        _worker?.Job.Terminate(1);
+        _worker?.Job.TryTerminate(1, out _);
         _control?.Dispose();
         _secretPipe?.Dispose();
         _worker?.Dispose();
@@ -233,7 +233,7 @@ internal sealed class JobRuntime : IAsyncDisposable
                 catch (OperationCanceledException) { return; }
                 catch { /* still terminate */ }
                 FailInfrastructure(WorkerFailureCode.HeartbeatTimeout);
-                _worker?.Job.Terminate(1);
+                _worker?.Job.TryTerminate(1, out _);
                 return;
             }
         }

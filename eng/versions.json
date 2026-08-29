@@ -158,6 +158,19 @@
       "sha256": "c6782a28842b1c0478524ac06a4f2ede784038ee298d6e2162c0b089c4306a3c",
       "gitCommit": "f3149ec5bb5449af877ba20377a11008ff499fa2",
       "modified": false
+    },
+    "nlohmannJson": {
+      "id": "nlohmann-json",
+      "version": "3.12.0",
+      "role": "G2 native IPC envelope JSON only — not a codec",
+      "license": "MIT",
+      "upstream": "https://github.com/nlohmann/json",
+      "sourceUrl": "https://github.com/nlohmann/json/releases/tag/v3.12.0",
+      "artifact": "json.hpp",
+      "artifactUrl": "https://github.com/nlohmann/json/releases/download/v3.12.0/json.hpp",
+      "sha256": "aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63",
+      "gitCommit": "55f93686c01528224f448c19128836e7df245f72",
+      "modified": false
     }
   },
   "referenceOnly": {

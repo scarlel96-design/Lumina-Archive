@@ -1,3 +1,5 @@
+set(LUMINA_THIRD_PARTY "${CMAKE_CURRENT_LIST_DIR}/../../third_party")
+
 add_executable(lumina-engine
   src/main.cpp
   src/capability_table.cpp
@@ -7,7 +9,13 @@ add_executable(lumina-engine
   src/ipc/secret_pipe_client.cpp
   src/ipc/worker_loop.cpp
 )
-target_include_directories(lumina-engine PRIVATE include src)
+target_include_directories(lumina-engine PRIVATE include src "${LUMINA_THIRD_PARTY}")
+
+add_executable(lumina-ipc-parse-test
+  src/ipc/protocol.cpp
+  src/ipc/protocol_test.cpp
+)
+target_include_directories(lumina-ipc-parse-test PRIVATE include src "${LUMINA_THIRD_PARTY}")
 
 # Codecs load only inside this process, and only after G3/G5 pin hashes exist.
 if(LUMINA_ENABLE_CODECS)

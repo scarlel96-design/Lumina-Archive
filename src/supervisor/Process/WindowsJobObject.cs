@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using Lumina.Supervisor.Errors;
 
@@ -32,9 +33,26 @@ internal sealed class WindowsJobObject : IDisposable
             throw new SupervisorException(SupervisorErrorCode.JobObjectAssignFailed, "process not in job after assign");
     }
 
+    public bool TryTerminate(uint exitCode, out int win32Error)
+    {
+        if (_handle.IsInvalid || _handle.IsClosed)
+        {
+            win32Error = 6; // ERROR_INVALID_HANDLE
+            return false;
+        }
+        if (!NativeMethods.TerminateJobObject(_handle.DangerousGetHandle(), exitCode))
+        {
+            win32Error = Marshal.GetLastWin32Error();
+            return false;
+        }
+        win32Error = 0;
+        return true;
+    }
+
     public void Terminate(uint exitCode = 1)
     {
-        NativeMethods.TerminateJobObject(_handle.DangerousGetHandle(), exitCode);
+        if (!TryTerminate(exitCode, out var err))
+            throw new SupervisorException(SupervisorErrorCode.JobObjectTerminateFailed, "TerminateJobObject failed: " + err);
     }
 
     public void Dispose() => _handle.Dispose();

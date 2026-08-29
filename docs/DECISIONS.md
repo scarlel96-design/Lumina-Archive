@@ -127,8 +127,22 @@ Format: date, status, context, decision, consequences.
   - Envelope requires `payload`. Sequence is contiguous per direction.
   - Pipe ACL is current-user only. Client PID must match the launched worker on control and secret pipes.
   - Worker is created `CREATE_SUSPENDED`, assigned to a Job Object with `KILL_ON_JOB_CLOSE` (and active-process 1), then resumed.
-  - Secret pipe is a one-shot binary frame (64 KiB max), wiped after use. No JSON library added; C++ uses a bounded envelope parser, C# uses `System.Text.Json`.
+  - Secret pipe is a one-shot binary frame (64 KiB max), wiped after use. Native IPC JSON is nlohmann/json 3.12.0 (ADR-0016). C# uses `System.Text.Json`.
   - Pause is cooperative (`paused`/`resumed` events). Heartbeat continues while paused. Watchdog uses `TimeProvider`.
   - Journal is atomic snapshot JSON; Running/Paused recover as Interrupted.
-  - ResourceGovernor is a FIFO global lease, not a hard Job Object memory kill.
+  - ResourceGovernor is a **strict FIFO** global lease: new requests join the queue when waiters exist; drain from head only; cancelled head is removed then the next head is evaluated. Not a hard Job Object memory kill.
 - Consequences: G3 may pass secrets into 7z.dll callbacks over this pipe. G2 Windows integration is required for full PASS. Linux preview remains dashboard-only.
+
+## ADR-0016 — nlohmann/json 3.12.0 for native IPC envelopes
+
+- Date: 2026-08-29
+- Status: accepted
+- Context: The G2 handwritten `protocol.cpp` parser accepted missing/trailing commas, substring-matched `secret_required`, and did not match C# `System.Text.Json` strictness. Patching more ad-hoc scanners would not justify Strict UTF-8/JSON = PASS.
+- Alternatives considered:
+  - Keep handwritten parser — rejected (contract holes).
+  - RapidJSON — MIT, fast, verbose SAX; heavier integration.
+  - yyjson — MIT, C, small; extra C toolchain surface.
+  - nlohmann/json 3.12.0 — MIT, header-only, mature, default-reject trailing commas/comments/trailing garbage; SAX can fail-closed on duplicate keys.
+- Decision: Vendor official `json.hpp` (SHA-256 `aaf127c04cb31c406e5b04a63f1ae89369fccde6d8fa7cdda1ed4f32dfc5de63` from downloaded bytes). IPC JSON only. Not a codec. Duplicate keys, unknown envelope fields, non-object payload, and non-boolean `secret_required` fail closed. ResourceGovernor FIFO holes are fixed in the same G2 hotfix (strict head-of-line).
+- Consequences: Native parse tests (`lumina-ipc-parse-test`) must run the real parser. G3 still does not start.
+

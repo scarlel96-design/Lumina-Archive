@@ -72,7 +72,7 @@ public static class EngineProcessLauncher
         }
         catch
         {
-            job?.Terminate(1);
+            job?.TryTerminate(1, out _);
             job?.Dispose();
             thread.Dispose();
             process.Dispose();

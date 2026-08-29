@@ -33,9 +33,13 @@ public static class ProtocolValidator
                     seq = RequireNonNegativeInt(prop.Value, "seq");
                     break;
                 case "kind":
+                    if (prop.Value.ValueKind != JsonValueKind.String)
+                        throw new SupervisorException(SupervisorErrorCode.EnvelopeInvalid, "kind");
                     kind = prop.Value.GetString();
                     break;
                 case "type":
+                    if (prop.Value.ValueKind != JsonValueKind.String)
+                        throw new SupervisorException(SupervisorErrorCode.EnvelopeInvalid, "type");
                     type = prop.Value.GetString();
                     break;
                 case "payload":

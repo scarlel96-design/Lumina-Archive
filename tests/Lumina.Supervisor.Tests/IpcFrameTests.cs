@@ -119,4 +119,15 @@ public class IpcFrameTests
     {
         Assert.Throws<SupervisorException>(() => ProtocolValidator.ValidateContiguous(3, 5));
     }
+
+    [Fact]
+    public void KindAndTypeMustBeStrings()
+    {
+        var kindNum = Encoding.UTF8.GetBytes("{\"protocol_version\":1,\"job_id\":\"a\",\"seq\":0,\"kind\":1,\"type\":\"pause\",\"payload\":{}}");
+        var typeBool = Encoding.UTF8.GetBytes("{\"protocol_version\":1,\"job_id\":\"a\",\"seq\":0,\"kind\":\"command\",\"type\":true,\"payload\":{}}");
+        var kex = Assert.Throws<SupervisorException>(() => IpcCodec.DecodeUtf8(kindNum));
+        var tex = Assert.Throws<SupervisorException>(() => IpcCodec.DecodeUtf8(typeBool));
+        Assert.Equal(SupervisorErrorCode.EnvelopeInvalid, kex.Code);
+        Assert.Equal(SupervisorErrorCode.EnvelopeInvalid, tex.Code);
+    }
 }

@@ -15,6 +15,7 @@ public enum SupervisorErrorCode
     WorkerLaunchFailed,
     JobObjectCreateFailed,
     JobObjectAssignFailed,
+    JobObjectTerminateFailed,
     WorkerResumeFailed,
     WorkerExitedUnexpectedly,
     HeartbeatTimeout,
