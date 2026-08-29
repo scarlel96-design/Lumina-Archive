@@ -281,14 +281,11 @@ function rec(over) {
 }
 
 test("invalid mandatory configuration rejects G1-BASELINE", () => {
-  const session = { authority: "physical-windows" };
+  const session = { authority: "physical-windows", warmup: 1, explicitWarmupRuns: 1, measuredRuns: 5 };
   const bad = rec({ summary: { n: 0, measuredValid: 0, incomplete: true, hash_ok: false } });
   const v = validatePhysicalSession({ session, results: [bad], silesiaSha256: PINNED_SILESIA });
   assert.equal(v.accepted, false);
   assert.ok(v.reasons.length > 0);
-  const good = rec({});
-  const ok = validatePhysicalSession({ session, results: [good], silesiaSha256: PINNED_SILESIA });
-  assert.equal(ok.accepted, true);
 });
 
 test("RESULTS.md renders once from all.json and labels INCOMPLETE", async () => {

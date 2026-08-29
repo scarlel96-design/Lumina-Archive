@@ -19,6 +19,7 @@ import { resolveBenchRunner } from "./telemetry.mjs";
 import { assertPhysicalTools, detectInstalledVersion } from "./versions-detect.mjs";
 import { EXTRACTION_THREAD_POLICY_AFFINITY, CACHE_POLICY, CACHE_POLICY_NOTE } from "./thread-policy.mjs";
 import { validatePhysicalSession } from "./accept-baseline.mjs";
+import { renderResultsMd } from "./render-results.mjs";
 
 const authority = "physical-windows";
 rejectGithubAsPhysical(authority);

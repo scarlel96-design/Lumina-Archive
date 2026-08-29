@@ -13,7 +13,7 @@ jobs:
           node-version: "22"
       - name: G1 constitution + parsers + pin file checks
         run: |
-          node --test tests/constitution/g1.test.mjs bench/scripts/parsers.test.mjs
+          node --test tests/constitution/g1.test.mjs tests/constitution/g1-hardening.test.mjs tests/constitution/g1-accept-baseline.test.mjs bench/scripts/parsers.test.mjs
           node bench/scripts/verify-pins.mjs
           node bench/scripts/summarize.mjs || true
 
