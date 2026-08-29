@@ -31,6 +31,10 @@ internal sealed class JobRuntime : IAsyncDisposable
     private DateTimeOffset _lastHeartbeat;
     private bool _cancelRequested;
     private bool _terminalCommitted;
+    private int _startSeq = -1;
+    private int _pauseSeq = -1;
+    private int _resumeSeq = -1;
+    private int _cancelSeq = -1;
     private readonly SemaphoreSlim _writeLock = new(1, 1);
     private TaskCompletionSource<bool> _accepted = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -108,7 +112,9 @@ internal sealed class JobRuntime : IAsyncDisposable
                     ["preview_slots"] = _lease.Grant.PreviewSlots,
                 },
             });
-            var start = new IpcEnvelope(ProtocolConstants.ProtocolVersion, JobId.ToString("D"), NextCommandSeq(), "command", "start", startPayload);
+            var startSeq = NextCommandSeq();
+            _startSeq = startSeq;
+            var start = new IpcEnvelope(ProtocolConstants.ProtocolVersion, JobId.ToString("D"), startSeq, "command", "start", startPayload);
             await WriteEnvelopeAsync(start, handshake.Token).ConfigureAwait(false);
 
             if (secret is { Length: > 0 })
@@ -135,13 +141,13 @@ internal sealed class JobRuntime : IAsyncDisposable
         catch (SupervisorException)
         {
             FailInfrastructure(WorkerFailureCode.WorkerLaunchFailed);
-            _worker?.Job.TryTerminate(1, out _);
+            ForceTerminateWorker();
             throw;
         }
         catch (Exception ex)
         {
             FailInfrastructure(WorkerFailureCode.HandshakeTimeout);
-            _worker?.Job.TryTerminate(1, out _);
+            ForceTerminateWorker();
             throw new SupervisorException(SupervisorErrorCode.HandshakeTimeout, "handshake failed", ex);
         }
     }
@@ -175,7 +181,7 @@ internal sealed class JobRuntime : IAsyncDisposable
             if (_loop is not null) await _loop.WaitAsync(ProtocolConstants.ShutdownGrace);
         }
         catch { /* swallow on dispose */ }
-        _worker?.Job.TryTerminate(1, out _);
+        RecordDisposeTerminate();
         _control?.Dispose();
         _secretPipe?.Dispose();
         _worker?.Dispose();
@@ -233,7 +239,7 @@ internal sealed class JobRuntime : IAsyncDisposable
                 catch (OperationCanceledException) { return; }
                 catch { /* still terminate */ }
                 FailInfrastructure(WorkerFailureCode.HeartbeatTimeout);
-                _worker?.Job.TryTerminate(1, out _);
+                ForceTerminateWorker();
                 return;
             }
         }
@@ -255,29 +261,49 @@ internal sealed class JobRuntime : IAsyncDisposable
             switch (env.Type)
             {
                 case "accepted":
+                    if (!ProtocolValidator.AckMatches(env.Payload, _startSeq))
+                    {
+                        CommitTerminalUnlocked(JobState.Interrupted, WorkerFailureCode.ProtocolBroken);
+                        break;
+                    }
                     _public = JobState.Running;
                     _phase = InternalJobPhase.Running;
                     Journal.State = JobState.Running;
                     _accepted.TrySetResult(true);
                     break;
                 case "paused":
+                    if (!ProtocolValidator.AckMatches(env.Payload, _pauseSeq))
+                    {
+                        CommitTerminalUnlocked(JobState.Interrupted, WorkerFailureCode.ProtocolBroken);
+                        break;
+                    }
                     _public = JobState.Paused;
                     _phase = InternalJobPhase.Paused;
                     Journal.State = JobState.Paused;
                     break;
                 case "resumed":
+                    if (!ProtocolValidator.AckMatches(env.Payload, _resumeSeq))
+                    {
+                        CommitTerminalUnlocked(JobState.Interrupted, WorkerFailureCode.ProtocolBroken);
+                        break;
+                    }
                     _public = JobState.Running;
                     _phase = InternalJobPhase.Running;
                     Journal.State = JobState.Running;
+                    break;
+                case "cancelled":
+                    if (!ProtocolValidator.AckMatches(env.Payload, _cancelSeq))
+                    {
+                        CommitTerminalUnlocked(JobState.Interrupted, WorkerFailureCode.ProtocolBroken);
+                        break;
+                    }
+                    CommitTerminalUnlocked(JobState.Cancelled, WorkerFailureCode.None);
                     break;
                 case "completed":
                     CommitTerminalUnlocked(JobState.Succeeded, WorkerFailureCode.None);
                     break;
                 case "failed":
                     CommitTerminalUnlocked(JobState.Failed, WorkerFailureCode.None);
-                    break;
-                case "cancelled":
-                    CommitTerminalUnlocked(JobState.Cancelled, WorkerFailureCode.None);
                     break;
                 case "heartbeat":
                 case "progress":
@@ -334,9 +360,10 @@ internal sealed class JobRuntime : IAsyncDisposable
         lock (_gate)
         {
             if (_terminalCommitted || _control is null) return;
-            if (type == "pause") _phase = InternalJobPhase.PausePending;
-            if (type == "resume") _phase = InternalJobPhase.ResumePending;
             env = new IpcEnvelope(ProtocolConstants.ProtocolVersion, JobId.ToString("D"), NextCommandSeq(), "command", type, payload);
+            if (type == "pause") { _phase = InternalJobPhase.PausePending; _pauseSeq = env.Seq; }
+            if (type == "resume") { _phase = InternalJobPhase.ResumePending; _resumeSeq = env.Seq; }
+            if (type == "cancel") { _cancelSeq = env.Seq; }
         }
         await WriteEnvelopeAsync(env, _cts.Token).ConfigureAwait(false);
         Persist();
@@ -354,6 +381,25 @@ internal sealed class JobRuntime : IAsyncDisposable
         {
             _writeLock.Release();
         }
+    }
+
+    private void ForceTerminateWorker()
+    {
+        var ok = true;
+        var err = 0;
+        if (_worker is not null)
+            ok = _worker.Job.TryTerminate(1, out err);
+        ForcedTerminationDiagnostics.Record(Journal, _failure, ok, err);
+        Persist();
+    }
+
+    private void RecordDisposeTerminate()
+    {
+        if (_worker is null) return;
+        if (_worker.Job.TryTerminate(1, out var err)) return;
+        Journal.TerminationErrorCode = err;
+        try { Persist(); }
+        catch { /* dispose must not throw */ }
     }
 
     private void SetPublic(JobState state, InternalJobPhase phase, bool persist)

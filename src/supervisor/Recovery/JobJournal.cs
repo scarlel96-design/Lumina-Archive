@@ -17,5 +17,6 @@ public sealed class JobJournal
     [JsonPropertyName("failure_code")] public string? FailureCode { get; set; }
     [JsonPropertyName("cancel_requested")] public bool CancelRequested { get; set; }
     [JsonPropertyName("forced_termination")] public bool ForcedTermination { get; set; }
+    [JsonPropertyName("termination_error_code")] public int? TerminationErrorCode { get; set; }
     [JsonPropertyName("protocol_version")] public int ProtocolVersion { get; set; } = 1;
 }

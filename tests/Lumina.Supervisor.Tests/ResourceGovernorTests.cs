@@ -171,7 +171,73 @@ public class ResourceGovernorTests
         held.Dispose();
         await Task.WhenAll(tasks);
         Assert.Equal(Enumerable.Range(0, 40), order.ToArray());
+        Assert.True(g.BudgetsExact());
     }
+
+    [Fact]
+    public async Task PreCancelledAcquireDoesNotReserve()
+    {
+        var g = new ResourceGovernor(cpu: 2, memoryBytes: 100, ioSlots: 2, previewSlots: 1);
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => g.AcquireAsync(new ResourceRequest(1, 10, 1, 0), cts.Token));
+        Assert.True(g.BudgetsExact());
+    }
+
+    [Fact]
+    public async Task CancelWinsBeforeGrantRestoresNothingToLeak()
+    {
+        var g = new ResourceGovernor(cpu: 1, memoryBytes: 100, ioSlots: 1, previewSlots: 1);
+        var held = await g.AcquireAsync(new ResourceRequest(1, 10, 1, 0), CancellationToken.None);
+        using var cts = new CancellationTokenSource();
+        var pending = g.AcquireAsync(new ResourceRequest(1, 10, 1, 0), cts.Token);
+        await Task.Delay(15);
+        cts.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pending);
+        held.Dispose();
+        Assert.True(g.BudgetsExact());
+    }
+
+    [Fact]
+    public async Task GrantWinsAfterTokenCancelStillReturnsLease()
+    {
+        var g = new ResourceGovernor(cpu: 1, memoryBytes: 100, ioSlots: 1, previewSlots: 1);
+        var held = await g.AcquireAsync(new ResourceRequest(1, 10, 1, 0), CancellationToken.None);
+        using var cts = new CancellationTokenSource();
+        var pending = g.AcquireAsync(new ResourceRequest(1, 10, 1, 0), cts.Token);
+        await Task.Delay(15);
+        held.Dispose();
+        using var lease = await pending;
+        cts.Cancel();
+        Assert.Equal(1, lease.Grant.CpuThreads);
+        lease.Dispose();
+        Assert.True(g.BudgetsExact());
+    }
+
+    [Fact]
+    public async Task GrantVsCancelStressNeverLeaks()
+    {
+        var g = new ResourceGovernor(cpu: 1, memoryBytes: 1000, ioSlots: 1, previewSlots: 1);
+        for (var i = 0; i < 1000; i++)
+        {
+            var held = await g.AcquireAsync(new ResourceRequest(1, 1, 1, 0), CancellationToken.None);
+            using var cts = new CancellationTokenSource();
+            var pending = g.AcquireAsync(new ResourceRequest(1, 1, 1, 0), cts.Token);
+            var releaser = Task.Run(() => held.Dispose());
+            var canceller = Task.Run(cts.Cancel);
+            await Task.WhenAll(releaser, canceller);
+            try
+            {
+                var lease = await pending;
+                lease.Dispose();
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            Assert.True(g.BudgetsExact());
+        }
+    }
+}
 
     private static async Task RecordAdmissionAsync(ResourceGovernor g, int id, System.Collections.Concurrent.ConcurrentQueue<int> order)
     {

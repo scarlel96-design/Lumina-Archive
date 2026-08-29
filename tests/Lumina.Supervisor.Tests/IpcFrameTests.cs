@@ -128,6 +128,39 @@ public class IpcFrameTests
         var kex = Assert.Throws<SupervisorException>(() => IpcCodec.DecodeUtf8(kindNum));
         var tex = Assert.Throws<SupervisorException>(() => IpcCodec.DecodeUtf8(typeBool));
         Assert.Equal(SupervisorErrorCode.EnvelopeInvalid, kex.Code);
-        Assert.Equal(SupervisorErrorCode.EnvelopeInvalid, tex.Code);
+    [Fact]
+    public void AckRequiresNonNegativeIntegerCommandSeq()
+    {
+        var missing = Encoding.UTF8.GetBytes("{\"protocol_version\":1,\"job_id\":\"a\",\"seq\":0,\"kind\":\"event\",\"type\":\"accepted\",\"payload\":{}}");
+        var asString = Encoding.UTF8.GetBytes("{\"protocol_version\":1,\"job_id\":\"a\",\"seq\":0,\"kind\":\"event\",\"type\":\"accepted\",\"payload\":{\"command_seq\":\"0\"}}");
+        var asFloat = Encoding.UTF8.GetBytes("{\"protocol_version\":1,\"job_id\":\"a\",\"seq\":0,\"kind\":\"event\",\"type\":\"accepted\",\"payload\":{\"command_seq\":1.5}}");
+        var negative = Encoding.UTF8.GetBytes("{\"protocol_version\":1,\"job_id\":\"a\",\"seq\":0,\"kind\":\"event\",\"type\":\"accepted\",\"payload\":{\"command_seq\":-1}}");
+        var nully = Encoding.UTF8.GetBytes("{\"protocol_version\":1,\"job_id\":\"a\",\"seq\":0,\"kind\":\"event\",\"type\":\"accepted\",\"payload\":{\"command_seq\":null}}");
+        Assert.Equal(SupervisorErrorCode.EnvelopeInvalid, Assert.Throws<SupervisorException>(() => IpcCodec.DecodeUtf8(missing)).Code);
+        Assert.Equal(SupervisorErrorCode.EnvelopeInvalid, Assert.Throws<SupervisorException>(() => IpcCodec.DecodeUtf8(asString)).Code);
+        Assert.Equal(SupervisorErrorCode.EnvelopeInvalid, Assert.Throws<SupervisorException>(() => IpcCodec.DecodeUtf8(asFloat)).Code);
+        Assert.Equal(SupervisorErrorCode.EnvelopeInvalid, Assert.Throws<SupervisorException>(() => IpcCodec.DecodeUtf8(negative)).Code);
+        Assert.Equal(SupervisorErrorCode.EnvelopeInvalid, Assert.Throws<SupervisorException>(() => IpcCodec.DecodeUtf8(nully)).Code);
+    }
+
+    [Fact]
+    public void AckCorrelationMatchesExpectedSeq()
+    {
+        var json = Encoding.UTF8.GetBytes("{\"protocol_version\":1,\"job_id\":\"a\",\"seq\":0,\"kind\":\"event\",\"type\":\"paused\",\"payload\":{\"command_seq\":3}}");
+        var env = IpcCodec.DecodeUtf8(json);
+        Assert.True(ProtocolValidator.AckMatches(env.Payload, 3));
+        Assert.False(ProtocolValidator.AckMatches(env.Payload, 999));
+        Assert.Equal(3, ProtocolValidator.RequireCommandSeq(env.Payload));
+    }
+
+    [Fact]
+    public void HeartbeatPayloadTypesRequired()
+    {
+        var ok = Encoding.UTF8.GetBytes("{\"protocol_version\":1,\"job_id\":\"a\",\"seq\":0,\"kind\":\"event\",\"type\":\"heartbeat\",\"payload\":{\"uptime_ms\":10,\"state\":\"paused\"}}");
+        Assert.Equal("heartbeat", IpcCodec.DecodeUtf8(ok).Type);
+        var badState = Encoding.UTF8.GetBytes("{\"protocol_version\":1,\"job_id\":\"a\",\"seq\":0,\"kind\":\"event\",\"type\":\"heartbeat\",\"payload\":{\"uptime_ms\":10,\"state\":\"runningg\"}}");
+        var missingUp = Encoding.UTF8.GetBytes("{\"protocol_version\":1,\"job_id\":\"a\",\"seq\":0,\"kind\":\"event\",\"type\":\"heartbeat\",\"payload\":{\"state\":\"running\"}}");
+        Assert.Equal(SupervisorErrorCode.EnvelopeInvalid, Assert.Throws<SupervisorException>(() => IpcCodec.DecodeUtf8(badState)).Code);
+        Assert.Equal(SupervisorErrorCode.EnvelopeInvalid, Assert.Throws<SupervisorException>(() => IpcCodec.DecodeUtf8(missingUp)).Code);
     }
 }

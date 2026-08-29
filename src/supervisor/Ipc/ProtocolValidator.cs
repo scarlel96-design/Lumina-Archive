@@ -117,20 +117,56 @@ public static class ProtocolValidator
                 case "paused":
                 case "resumed":
                 case "cancelled":
-                    RequireEmptyOrKnown(payload, ["command_seq"]);
+                    RequireCommandSeq(payload);
                     break;
                 case "heartbeat":
-                    RequireEmptyOrKnown(payload, ["uptime_ms", "state"]);
+                    RequireHeartbeat(payload);
                     break;
                 case "progress":
                     RequireEmptyOrKnown(payload, ["entries_done", "entries_total", "bytes_done", "bytes_total", "rate_bps", "phase", "current_entry_display"]);
                     break;
                 case "completed":
                 case "failed":
+                    // G2 workers do not emit codec terminal events. If present, fields must type-check.
                     RequireEmptyOrKnown(payload, ["command_seq", "code", "message"]);
+                    if (payload.TryGetProperty("command_seq", out var termSeq))
+                        RequireNonNegativeInt(termSeq, "command_seq");
                     break;
             }
         }
+    }
+
+    public static int RequireCommandSeq(JsonElement payload)
+    {
+        RequireEmptyOrKnown(payload, ["command_seq"]);
+        if (!payload.TryGetProperty("command_seq", out var seqEl))
+            throw new SupervisorException(SupervisorErrorCode.EnvelopeInvalid, "command_seq missing");
+        return RequireNonNegativeInt(seqEl, "command_seq");
+    }
+
+    public static bool AckMatches(JsonElement payload, int expectedCommandSeq)
+    {
+        try
+        {
+            return RequireCommandSeq(payload) == expectedCommandSeq;
+        }
+        catch (SupervisorException)
+        {
+            return false;
+        }
+    }
+
+    private static void RequireHeartbeat(JsonElement payload)
+    {
+        RequireEmptyOrKnown(payload, ["uptime_ms", "state"]);
+        if (!payload.TryGetProperty("uptime_ms", out var up))
+            throw new SupervisorException(SupervisorErrorCode.EnvelopeInvalid, "uptime_ms missing");
+        RequireNonNegativeInt(up, "uptime_ms");
+        if (!payload.TryGetProperty("state", out var st) || st.ValueKind != JsonValueKind.String)
+            throw new SupervisorException(SupervisorErrorCode.EnvelopeInvalid, "heartbeat state");
+        var s = st.GetString();
+        if (s is not ("running" or "paused"))
+            throw new SupervisorException(SupervisorErrorCode.EnvelopeInvalid, "heartbeat state");
     }
 
     private static void RequireEmptyOrKnown(JsonElement payload, string[] allowed)

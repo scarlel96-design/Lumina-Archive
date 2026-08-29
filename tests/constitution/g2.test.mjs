@@ -94,11 +94,32 @@ test("ResourceGovernor drains from queue head", () => {
   assert.match(gov, /_waiters\.Count == 0 && TryReserveUnlocked/);
 });
 
-test("TerminateJobObject result is checked", () => {
+test("TerminateJobObject result is checked and recorded", () => {
   const job = read("src/supervisor/Process/WindowsJobObject.cs");
   assert.match(job, /TryTerminate/);
   assert.match(job, /GetLastWin32Error/);
   assert.match(job, /JobObjectTerminateFailed/);
+  const runtime = read("src/supervisor/Jobs/JobRuntime.cs");
+  assert.match(runtime, /ForceTerminateWorker/);
+  assert.match(runtime, /ForcedTerminationDiagnostics\.Record/);
+  assert.equal(/TryTerminate\(1, out _\)/.test(runtime), false);
+});
+
+test("nlohmann MIT license is complete upstream text", () => {
+  const lic = read("third_party/nlohmann/LICENSE.MIT");
+  assert.match(lic, /Copyright \(c\) 2013-2025 Niels Lohmann/);
+  assert.match(lic, /Permission is hereby granted, free of charge/);
+  assert.match(lic, /THE SOFTWARE IS PROVIDED "AS IS"/);
+  assert.equal(/https:\/\/github.com\/nlohmann\/json\/blob/.test(lic), false);
+});
+
+test("ResourceGovernor waiter state machine exists", () => {
+  const gov = read("src/supervisor/Resources/ResourceGovernor.cs");
+  assert.match(gov, /enum WaiterState/);
+  assert.match(gov, /WaiterState\.Granted/);
+  assert.match(gov, /WaiterState\.Cancelled/);
+  assert.match(gov, /ThrowIfCancellationRequested/);
+  assert.equal(/WaitAsync\(cancellationToken\)/.test(gov), false);
 });
 
 test("native parser tests actually run", () => {

@@ -43,8 +43,20 @@ and close the connection. No heuristic parsing.
 Duplicate, gap, or decrease is `SequenceViolation`. The two directions do
 not share a counter.
 
-Acknowledgements (`accepted`, `paused`, `resumed`, `cancelled`) include
-`{"command_seq": N}` in payload. Do not use timestamps as correlation IDs.
+Acknowledgements (`accepted`, `paused`, `resumed`, `cancelled`) **must**
+include `{"command_seq": N}` where `N` is the integer sequence of the
+command being acknowledged (`>= 0`). Missing, non-integer, negative, or
+mismatched `command_seq` is `EnvelopeInvalid` / `ProtocolBroken` and must
+not mutate public `JobState`.
+
+Heartbeat payload requires `uptime_ms` (integer `>= 0`) and `state`
+(`"running"` or `"paused"`). Heartbeat continues while cooperatively paused.
+
+`completed` / `failed` are reserved for later codec work. G2 workers do not
+emit them; if they appear, extra fields remain constrained and `command_seq`
+is optional but type-checked when present.
+
+Do not use timestamps as correlation IDs.
 
 ## Direction
 
@@ -101,8 +113,11 @@ C++ uses `SecureZeroMemory` after G2 consumption. G3 will pass bytes into
 
 Engine emits `heartbeat` about every 1s while alive, **including while
 cooperatively paused**. Stale after 5s: graceful cancel/shutdown, 2s grace,
-then terminate Job Object. Final state `Interrupted` with
-`HeartbeatTimeout` / `WorkerExitedUnexpectedly` / `ProtocolBroken`.
+then `TerminateJobObject`. Primary state is `Interrupted` with
+`HeartbeatTimeout`. `forced_termination=true`. A TerminateJobObject Win32
+failure is recorded as `termination_error_code` and does **not** replace
+the primary reason. Dispose uses non-throwing TryTerminate; KILL_ON_JOB_CLOSE
+is the containment backstop.
 
 Unexpected process exit without a prior terminal event is `Interrupted`,
 not `Failed`. A normal exit **after** `completed`/`failed`/`cancelled` must
