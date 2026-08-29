@@ -20,6 +20,7 @@ test("G1 required files exist", () => {
     "bench/scripts/verify-pins.mjs",
     "eng/vendor-pins.json",
     ".github/workflows/bench-harness.yml",
+    "bench/G1-BASELINE.json",
   ]) {
     assert.ok(existsSync(join(root, p)), p);
   }
@@ -93,6 +94,20 @@ test("CMake still forbids codec enablement", () => {
 
 test("shell still has no parser", () => {
   assert.equal(/minizip|archive\.h|7z\.h/.test(read("native/shell/src/explorer_command.cpp")), false);
+});
+
+test("accepted G1 baseline ledger exists and is fail-closed", () => {
+  const baseline = JSON.parse(read("bench/G1-BASELINE.json"));
+  assert.equal(baseline.accepted, true);
+  assert.equal(baseline.sessionId, "g1-2026-08-29T10-35-59-881Z");
+  assert.equal(baseline.authority, "physical-windows");
+  assert.equal(baseline.harnessCommit, "c20b61844907fccd13202a888ff480b22c4bfa69");
+  assert.equal(baseline.machineFingerprint, "fd10fb1bd6fbcd094e8a4b936440bf2456188d4b09a4b91abfa06e0bfcbd3dd4");
+  assert.equal(baseline.lumina, "SKIPPED_NOT_LINKED");
+  assert.equal(existsSync(join(root, "bench/results/g1-2026-08-29T10-35-59-881Z/G1-BASELINE-INVALID.json")), false);
+  const validation = JSON.parse(read("bench/results/g1-2026-08-29T10-35-59-881Z/validation.json"));
+  assert.equal(validation.accepted, true);
+  assert.deepEqual(validation.reasons, []);
 });
 
 test("7-Zip parser fixture", () => {

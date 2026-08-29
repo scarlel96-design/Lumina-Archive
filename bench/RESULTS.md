@@ -1,21 +1,29 @@
 # Bench results
 
-G1 fills **competitor** rows only from `authority=physical-windows` JSON
-on a fixed NVMe PC. Lumina is `SKIPPED_NOT_LINKED` until G5.
+G1 **external competitive baseline** ledger. Raw JSON is authoritative.
+Do not hand-edit numbers. Lumina is SKIPPED_NOT_LINKED and is **not** in
+performance tables. You must not claim “faster than Bandizip”. That
+sentence is not authorized by G1. Lumina-vs-Bandizip is the **G5** gate.
 
-Do **not** copy GitHub Actions timings here as a competitor baseline.
-You must not claim “faster than Bandizip” until the **marketing** gate
-(not G1) in the spec is met. Lumina-vs-Bandizip is the **G5** gate.
+## Authoritative physical Windows
 
-## Authoritative physical Windows (empty)
+- Session: `g1-2026-08-29T10-35-59-881Z`
+- Authority: `physical-windows`
+- Harness: `c20b61844907fccd13202a888ff480b22c4bfa69`
+- Machine fingerprint: `fd10fb1bd6fbcd094e8a4b936440bf2456188d4b09a4b91abfa06e0bfcbd3dd4`
+- Acceptance: `accepted=true` (`bench/G1-BASELINE.json`)
+- Mandatory matrix: 48 unique configurations, 240/240 measured valid
+- Create verifications: 96/96
+- Canonical extract SHA mismatches: 0
+- Tools: 7-Zip 26.02, Bandizip 7.46 (`bz.exe`)
+- Lumina: SKIPPED_NOT_LINKED
+- NanaZip: optional skipped
+- NOISY: present as CV>5% quality flags; not removed
 
-| tool | version | corpus | preset | median_s | p95_s | mbps | output_bytes | peak_wss | hash_ok | notes |
-|---|---|---|---|---|---|---|---|---|---|---|
-| 7-Zip | 26.02 | — | — | — | — | — | — | — | — | not run on lab PC |
-| NanaZip | 6.5.1800 | — | — | — | — | — | — | — | — | not run on lab PC |
-| Bandizip | 7.46 | — | — | — | — | — | — | — | — | not run on lab PC |
-| Lumina | 0.0.0-g1 | — | — | — | — | — | — | — | — | SKIPPED_NOT_LINKED (expected in G1) |
+Per-run medians/p95 live in the lab-PC session `all.json`. This repository
+stores the sanitized acceptance ledger only. Do not invent timings here.
 
 ## CI / dev harness (not evidence)
 
 Leave this section empty of medians. Smoke JSON lives in `bench/out/` (gitignored).
+GitHub Actions timings are never the competitor baseline.

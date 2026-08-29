@@ -107,6 +107,15 @@ Format: date, status, context, decision, consequences.
   - G1 PASS = harness tests + Linux/Windows smoke + physical Windows **external** baseline (7-Zip 26.02, Bandizip 7.46, NanaZip when available). Lumina row must be `SKIPPED_NOT_LINKED` and that skip is success.
   - Bandizip-vs-Lumina competitive benchmark is the **G5 Competitive Performance Gate**, using the same machine/corpus/versions/thread budget/harness.
   - Marketing “faster than Bandizip” remains a separate claim, not authorized by G1.
-- Consequences: G2 may start after G1 PASS without any Lumina codec. G1 is still CONDITIONAL PASS until the physical competitor session exists. See `docs/BENCHMARKING.md`.
+- Consequences: G2 may start after G1 PASS without any Lumina codec. Physical session `g1-2026-08-29T10-35-59-881Z` is the accepted G1 baseline (ADR-0014). See `docs/BENCHMARKING.md`.
+
+## ADR-0014 — G1 physical Windows baseline accepted
+
+- Date: 2026-08-29
+- Status: accepted
+- Context: Session `g1-2026-08-29T10-35-59-881Z` on harness `c20b61844907fccd13202a888ff480b22c4bfa69` was independently reviewed: 48 unique mandatory configs, 240/240 measured valid, helper/affinity/tree/canonical-SHA evidence complete, Lumina `SKIPPED_NOT_LINKED`.
+- Decision: G1 = PASS. Physical Windows Baseline = PASS. G2 Development Entry = READY. NOISY CV>5% flags stay in the record. Marketing Lumina-vs-Bandizip remains G5. Do not start G2 in the closure commit.
+- Consequences: Later G5 must reuse this machine fingerprint `fd10fb1bd6fbcd094e8a4b936440bf2456188d4b09a4b91abfa06e0bfcbd3dd4`, corpus pins, tool versions, thread budget, and harness protocol. Raw JSON on the lab PC remains authoritative for timings.
+
 
 

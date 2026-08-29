@@ -36,6 +36,12 @@ That skip is success, not a failure. Archive I/O is linked in G3/G5.
 GitHub-hosted runners may only prove the harness. They are never the
 authoritative competitor baseline.
 
+Accepted G1 physical session: `g1-2026-08-29T10-35-59-881Z`
+(harness `c20b61844907fccd13202a888ff480b22c4bfa69`, fingerprint
+`fd10fb1bd6fbcd094e8a4b936440bf2456188d4b09a4b91abfa06e0bfcbd3dd4`).
+See `bench/G1-BASELINE.json`. G2 is READY and is not started by G1 closure.
+
+
 ## G5 — Competitive Performance Gate
 
 Moved out of G1:

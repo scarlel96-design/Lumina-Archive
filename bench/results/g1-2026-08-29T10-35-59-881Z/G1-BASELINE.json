@@ -1,0 +1,29 @@
+{
+  "schema": "lumina.g1.baseline.v1",
+  "baselineId": "G1-g1-2026-08-29T10-35-59-881Z",
+  "sessionId": "g1-2026-08-29T10-35-59-881Z",
+  "authority": "physical-windows",
+  "accepted": true,
+  "harnessCommit": "c20b61844907fccd13202a888ff480b22c4bfa69",
+  "machineFingerprint": "fd10fb1bd6fbcd094e8a4b936440bf2456188d4b09a4b91abfa06e0bfcbd3dd4",
+  "silesiaSha256": "0626e25f45c0ffb5dc801f13b7c82a3b75743ba07e3a71835a41e3d9f63c77af",
+  "tools": {
+    "sevenZip": "26.02",
+    "bandizip": "7.46",
+    "bandizipExecutable": "bz.exe"
+  },
+  "lumina": "SKIPPED_NOT_LINKED",
+  "nanazip": "optional-skipped",
+  "mandatory": {
+    "uniqueConfigurations": 48,
+    "measuredSamplesValid": "240/240",
+    "warmupsValid": "48/48",
+    "mandatoryRunsValid": "288/288",
+    "createVerificationsValid": "96/96",
+    "canonicalExtractShaMismatches": 0,
+    "telemetryErrors": 0,
+    "affinityMask": "0xff"
+  },
+  "noisy": "present-as-measurement-quality-flag-not-G1-failure",
+  "marketing": "G1 does not authorize Lumina-vs-Bandizip; that remains G5"
+}

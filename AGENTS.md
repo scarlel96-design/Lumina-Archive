@@ -55,11 +55,11 @@ G0 Constitution → G1 Bench harness → G2 IPC+Supervisor → G3 7z.dll core �
 G4 Safe Extract → G5 Adaptive ZIP → G6 WinUI shell → G7 power features →
 G8 Explorer/MSIX/update → G9 RC hardening.
 
-Current phase is recorded in `docs/STATUS.md`. **This tree is G1 (bench harness).**
+Current phase is recorded in `docs/STATUS.md`. **G1 is PASS.**
 G1 PASS is the external competitor baseline, not Lumina-vs-Bandizip.
 Lumina in G1 is `SKIPPED_NOT_LINKED` (success). Competitive compare is G5.
-G2 is blocked until G1 is PASS (physical 7-Zip/Bandizip session) or an explicit
-CONDITIONAL PASS that names the remaining blocker.
+G2 Development Entry is READY. Do not start G2 in the G1 closure commit.
+
 
 
 

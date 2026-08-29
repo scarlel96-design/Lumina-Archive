@@ -69,8 +69,12 @@ test("physical session scripts exist and refuse codecs", () => {
   assert.match(read("native/engine/CMakeLists.txt"), /G0 forbids codec enablement/);
 });
 
-test("STATUS still does not claim physical baseline PASS", () => {
+test("STATUS records accepted physical baseline", () => {
   const status = read("docs/STATUS.md");
-  assert.match(status, /MISSING|INCOMPLETE|CONDITIONAL PASS/);
+  assert.match(status, /Physical Windows baseline.*PASS/s);
+  assert.match(status, /g1-2026-08-29T10-35-59-881Z/);
+  assert.match(status, /fd10fb1bd6fbcd094e8a4b936440bf2456188d4b09a4b91abfa06e0bfcbd3dd4/);
   assert.match(status, /SKIPPED_NOT_LINKED/);
+  assert.match(status, /G2 Development Entry.*READY/);
+  assert.match(status, /\*\*G1 overall\*\*.*PASS/);
 });
