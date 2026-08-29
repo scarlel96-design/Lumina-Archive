@@ -32,20 +32,20 @@ export async function treeManifest(dir) {
   return { files, treeSha256: h.digest("hex") };
 }
 
+export async function listRelativeFiles(dir) {
+  const m = await treeManifest(dir);
+  return m.files.map((f) => f.path);
+}
+
+/** Exact relative path + size + SHA-256. No basename fallback. */
 export function manifestsEqual(a, b) {
-  if (a.treeSha256 === b.treeSha256) return true;
-  if (a.files.length !== b.files.length) return false;
-  const byName = (list) => {
-    const m = new Map();
-    for (const f of list) m.set(f.path.split("/").pop(), f);
-    return m;
-  };
-  const am = byName(a.files);
-  const bm = byName(b.files);
-  if (am.size !== bm.size) return false;
-  for (const [name, f] of am) {
-    const g = bm.get(name);
-    if (!g || g.bytes !== f.bytes || g.sha256 !== f.sha256) return false;
+  if (!a || !b) return false;
+  if (a.treeSha256 && b.treeSha256 && a.treeSha256 === b.treeSha256) return true;
+  if (!a.files || !b.files || a.files.length !== b.files.length) return false;
+  for (let i = 0; i < a.files.length; i++) {
+    const x = a.files[i];
+    const y = b.files[i];
+    if (x.path !== y.path || x.bytes !== y.bytes || x.sha256 !== y.sha256) return false;
   }
   return true;
 }

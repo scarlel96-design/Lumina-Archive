@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { pipeline } from "node:stream/promises";
 import { spawnSync } from "node:child_process";
 import { ROOT, BENCH, readJson, sha256File } from "./common.mjs";
+import { resolveSevenZipConsole } from "./measure-resolve.mjs";
 
 const pins = await readJson(join(ROOT, "eng/corpus-pins.json"));
 const destDir = join(ROOT, "vendor/cache");
@@ -29,12 +30,14 @@ if (got !== pins.silesiaZip.sha256) {
 
 const extract = join(BENCH, "out/corpus/silesia");
 await mkdir(extract, { recursive: true });
-const unzip = spawnSync("unzip", ["-o", "-q", dest, "-d", extract], { stdio: "inherit" });
-if (unzip.status !== 0) {
-  const seven = spawnSync("7zz", ["x", "-y", `-o${extract}`, dest], { stdio: "inherit" });
-  if (seven.status !== 0) {
-    console.error("extract silesia failed (need unzip or 7zz)");
-    process.exit(1);
-  }
+const seven = await resolveSevenZipConsole();
+if (!seven) {
+  console.error("Silesia extract needs resolved 7z.exe / 7za.exe / 7zz from the harness resolver");
+  process.exit(1);
 }
-console.log(`OK silesia ${got} -> ${extract}`);
+const r = spawnSync(seven, ["x", "-y", `-o${extract}`, dest], { stdio: "inherit" });
+if (r.status !== 0) {
+  console.error(`extract silesia failed via ${seven}`);
+  process.exit(1);
+}
+console.log(`OK silesia ${got} via ${seven} -> ${extract}`);

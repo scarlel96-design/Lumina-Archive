@@ -13,6 +13,6 @@ jobs:
       - name: G0 constitution tests
         run: node --test tests/constitution/g0.test.mjs
       - name: G1 constitution tests
-        run: node --test tests/constitution/g1.test.mjs tests/constitution/g1-physical.test.mjs bench/scripts/parsers.test.mjs
+        run: node --test tests/constitution/g1.test.mjs tests/constitution/g1-physical.test.mjs tests/constitution/g1-hardening.test.mjs bench/scripts/parsers.test.mjs
       - name: Verify vendor pin files
         run: node bench/scripts/verify-pins.mjs

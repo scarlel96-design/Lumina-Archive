@@ -23,15 +23,13 @@ authoritative JSON exists.
 
 Closed in this turn:
 
-- Silesia `silesia.zip` fetched from `https://sun.aei.polsl.pl/~sdeor/corpus/silesia.zip`
-  (68182744 bytes, SHA-256 `0626e25f45c0ffb5dc801f13b7c82a3b75743ba07e3a71835a41e3d9f63c77af`)
-- Deterministic `incompressible-64m`
-- Physical session runner, machine collector, stats, rotation, RESULTS renderer, freeze manifest
-- GitHub Actions cannot claim `physical-windows`
+- Canonical extraction fixtures (same bytes to every extractor)
+- Unique clean extract destinations; strict path+size+SHA-256
+- `lumina-bench-run.exe` FIXED_AFFINITY + process telemetry (bench-only)
+- Physical Bandizip must be `bz.exe` 26.02/7.46 fail-closed version check
+- Silesia extract via harness 7-Zip resolver
+- G1 harness tests including hardening suite
 
-Still required for G1 PASS: one lab PC run of
-`pwsh bench/scripts/collect-machine.ps1` then
-`node bench/scripts/run-physical-session.mjs`
-with 7-Zip 26.02 and Bandizip 7.46 **outside** the repo.
+Still required for G1 PASS: lab PC session. Do **not** start G2. Do **not**
+run physical baseline until hardening tests are green (they are, on this host).
 
-Do **not** start G2. Do **not** link codecs. Do **not** time Lumina.

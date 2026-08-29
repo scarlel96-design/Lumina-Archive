@@ -41,12 +41,16 @@ export async function prepareCorpus(id, outRoot) {
     }
     const existing = await readdir(dir).catch(() => []);
     if (!existing.includes("dickens")) {
-      const unzip = spawnSync("unzip", ["-o", "-q", zip, "-d", dir], { stdio: "inherit" });
-      if (unzip.status !== 0) {
-        const seven = spawnSync("7zz", ["x", "-y", `-o${dir}`, zip], { stdio: "inherit" });
-        if (seven.status !== 0) throw new Error("cannot extract silesia");
-      }
+      const { resolveSevenZipConsole } = await import("./measure-resolve.mjs");
+      const seven = await resolveSevenZipConsole();
+      if (!seven) throw new Error("cannot extract silesia: no 7-Zip console from harness resolver");
+      const sevenRun = spawnSync(seven, ["x", "-y", `-o${dir}`, zip], { stdio: "inherit" });
+      if (sevenRun.status !== 0) throw new Error(`cannot extract silesia via ${seven}`);
     }
+    return dir;
+  }
+  if (id === "dup-names") {
+    await cp(join(BENCH, "fixtures/dup-names"), dir, { recursive: true });
     return dir;
   }
   if (id === "encoding-names") {

@@ -37,10 +37,20 @@ On the **lab Windows PC only** (not GitHub Actions, not this Linux sandbox):
 3. `node bench/scripts/fetch-corpus.mjs` (verifies Silesia SHA-256)
 4. `node bench/scripts/run-physical-session.mjs`
 
-That script refuses `GITHUB_ACTIONS` and non-Windows hosts. Warmup=1, runs=5,
-threadBudget=`min(8, logicalProcessors)`, cache policy `hot-after-single-warmup`.
-Tool order rotates per corpus. Lumina is `SKIPPED_NOT_LINKED`.
-Raw JSON: `bench/results/<session-id>/`. `RESULTS.md` is generated, never hand-edited.
+Create ZIP-A (7-Zip) and ZIP-B (Bandizip) once per corpus. Every extractor times
+those **same archive bytes**. Each extract run uses a clean `extract/.../run-N/`
+directory. Exit code 0 without an exact tree match is `valid=false`.
+Physical Bandizip is `bz.exe` 7.46 only.
+
+
+## Thread policy
+
+- **compressionThreadPolicy** = `native-fixed-switch` (`7z -mmt=N`, `bz -t:N` on create only).
+- **extractionThreadPolicy** = `FIXED_AFFINITY` on physical Windows via `lumina-bench-run.exe`
+  (`CreateProcess` suspended + `SetProcessAffinityMask`). Bandizip `-t` is **not** an extract cap.
+- If the helper is missing, policy is `NATIVE_AUTO` and the session **must not** claim extract used `threadBudget`.
+  Physical PASS requires the helper.
+
 
 
 ## G5 Competitive Performance Gate (later)

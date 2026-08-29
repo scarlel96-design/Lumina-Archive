@@ -78,6 +78,9 @@ jobs:
       - name: MSVC build lumina-7z-adapter
         run: cmake --build --preset windows-x64-release --target lumina-7z-adapter --config Release
 
+      - name: MSVC build lumina-bench-run (G1 helper, not product)
+        run: cmake --build --preset windows-x64-release --target lumina-bench-run --config Release
+
       - name: Constitution tests
         run: node --test tests/constitution/g0.test.mjs
 
