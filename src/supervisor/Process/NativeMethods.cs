@@ -1,8 +1,9 @@
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace Lumina.Supervisor.Process;
 
-internal static partial class NativeMethods
+internal static class NativeMethods
 {
     public const uint CREATE_SUSPENDED = 0x00000004;
     public const uint CREATE_UNICODE_ENVIRONMENT = 0x00000400;
@@ -74,37 +75,37 @@ internal static partial class NativeMethods
         ref STARTUPINFOW lpStartupInfo,
         out PROCESS_INFORMATION lpProcessInformation);
 
-    [LibraryImport("kernel32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
-    public static partial IntPtr CreateJobObjectW(IntPtr lpJobAttributes, string? lpName);
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    public static extern IntPtr CreateJobObjectW(IntPtr lpJobAttributes, string? lpName);
 
-    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    public static partial bool SetInformationJobObject(IntPtr hJob, int jobObjectInfoClass, ref JOBOBJECT_EXTENDED_LIMIT_INFORMATION lpJobObjectInfo, int cbJobObjectInfoLength);
+    public static extern bool SetInformationJobObject(IntPtr hJob, int jobObjectInfoClass, ref JOBOBJECT_EXTENDED_LIMIT_INFORMATION lpJobObjectInfo, int cbJobObjectInfoLength);
 
-    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    public static partial bool AssignProcessToJobObject(IntPtr hJob, IntPtr hProcess);
+    public static extern bool AssignProcessToJobObject(IntPtr hJob, IntPtr hProcess);
 
-    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    public static partial bool IsProcessInJob(IntPtr hProcess, IntPtr hJob, [MarshalAs(UnmanagedType.Bool)] out bool result);
+    public static extern bool IsProcessInJob(IntPtr hProcess, IntPtr hJob, [MarshalAs(UnmanagedType.Bool)] out bool result);
 
-    [LibraryImport("kernel32.dll", SetLastError = true)]
-    public static partial uint ResumeThread(IntPtr hThread);
+    [DllImport("kernel32.dll", SetLastError = true)]
+    public static extern uint ResumeThread(IntPtr hThread);
 
-    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    public static partial bool TerminateJobObject(IntPtr hJob, uint uExitCode);
+    public static extern bool TerminateJobObject(IntPtr hJob, uint uExitCode);
 
-    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    public static partial bool GetExitCodeProcess(IntPtr hProcess, out uint lpExitCode);
+    public static extern bool GetExitCodeProcess(IntPtr hProcess, out uint lpExitCode);
 
-    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    public static partial bool CloseHandle(IntPtr hObject);
+    public static extern bool CloseHandle(IntPtr hObject);
 
-    [LibraryImport("kernel32.dll", SetLastError = true)]
+    [DllImport("kernel32.dll", SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]
-    public static partial bool GetNamedPipeClientProcessId(IntPtr pipe, out uint clientProcessId);
+    public static extern bool GetNamedPipeClientProcessId(IntPtr pipe, out uint clientProcessId);
 }
