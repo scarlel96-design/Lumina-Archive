@@ -6,7 +6,7 @@ import { join } from "node:path";
 import test from "node:test";
 import { treeManifest, manifestsEqual } from "../../bench/scripts/tree-hash.mjs";
 import { extractDestPath, extractArgs, createArgs } from "../../bench/scripts/fixtures.mjs";
-import { assertPhysicalBandizipPath, assertExactVersion, parseSevenZipVersion } from "../../bench/scripts/versions-detect.mjs";
+import { assertPhysicalBandizipPath, assertExactVersion, parseSevenZipVersion, parseBandizipVersion, parseBandizipBanner } from "../../bench/scripts/versions-detect.mjs";
 import { extractionPolicy, EXTRACTION_THREAD_POLICY_AUTO, EXTRACTION_THREAD_POLICY_AFFINITY, assertNoFalseExtractThreads } from "../../bench/scripts/thread-policy.mjs";
 import { emptyTelemetry, infrastructureOk } from "../../bench/scripts/telemetry.mjs";
 import { rotateCreateProducers, CACHE_POLICY, assertAffinityNotAssumed } from "../../bench/scripts/thread-policy.mjs";
@@ -91,7 +91,51 @@ test("physical Bandizip requires bz.exe and exact versions", () => {
   assert.throws(() => assertExactVersion("25.00", "26.02", "7-Zip"));
   assertExactVersion("26.02", "26.02", "7-Zip");
   assert.equal(parseSevenZipVersion("7-Zip (z) 26.02 (x64)"), "26.02");
+  assert.equal(parseSevenZipVersion("7-Zip 26.02 (x64) : Copyright (c) 1999-2026 Igor Pavlov : 2026-06-25"), "26.02");
 });
+
+test("parses the real physical bz.exe 7.46 Beta banner", () => {
+  const real = readFileSync(join(import.meta.dirname, "../../bench/fixtures/bz-7.46-banner.txt"), "utf8");
+  assert.equal(
+    real.trim(),
+    "bz 7.46(Beta,x64) - Bandizip console tool. Copyright (C) 2026 Bandisoft",
+  );
+  assert.equal(parseBandizipVersion(real), "7.46");
+  const parsed = parseBandizipBanner(real);
+  assert.equal(parsed.detected, "7.46");
+  assert.equal(parsed.versionQualifier, "Beta");
+  assert.equal(parsed.architectureQualifier, "x64");
+});
+
+test("Bandizip banner forms yield 7.46", () => {
+  for (const s of [
+    "bz 7.46(Beta,x64) - Bandizip console tool. Copyright (C) 2026 Bandisoft",
+    "bz 7.46(x64)",
+    "bz 7.46",
+    "Bandizip 7.46",
+    "Bandizip v7.46",
+    "Bandizip.com 7.46",
+  ]) {
+    assert.equal(parseBandizipVersion(s), "7.46", s);
+  }
+});
+
+test("Bandizip parser does not accept arbitrary 7.46 text", () => {
+  for (const s of [
+    "Copyright 2026",
+    "version 7.46",
+    "some-tool 7.46",
+    "7.46",
+    "error 7.46",
+    "random Bandizip text without a valid banner",
+  ]) {
+    assert.equal(parseBandizipVersion(s), null, s);
+  }
+  assert.throws(() => assertExactVersion("7.45", "7.46", "Bandizip"));
+  assert.throws(() => assertExactVersion("7.47", "7.46", "Bandizip"));
+  assert.throws(() => assertExactVersion(null, "7.46", "Bandizip"));
+});
+
 
 test("Windows corpus extractor uses harness 7-Zip resolver not unzip-only", () => {
   const fetchSrc = readFileSync(join(import.meta.dirname, "../../bench/scripts/fetch-corpus.mjs"), "utf8");

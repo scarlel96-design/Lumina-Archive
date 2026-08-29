@@ -1,0 +1,1 @@
+bz 7.46(Beta,x64) - Bandizip console tool. Copyright (C) 2026 Bandisoft
