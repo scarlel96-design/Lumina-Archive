@@ -156,7 +156,7 @@ Format: date, status, context, decision, consequences.
   - Production ARM64 `7z.dll` is extracted from official `7z2602-arm64.exe` after SHA-256 `7c6fde79ed5e11b81c7bb6573b7962d3b6322aa5fce69c33ed19f672b55173ab`.
   - Extraction uses pinned `7zr.exe`; the installer is never executed.
   - Runtime binaries are fetched/staged, never committed.
-  - Interface headers are the 26.02 source commit `f9d78aff31a5f2521ae7ddbdc97c4a8855808959`, vendored as a minimal subset under `third_party/7zip-26.02/sdk`.
+  - Interface headers are the 26.02 source commit `f9d78aff31a5f2521ae7ddbdc97c4a8855808959`, vendored as a minimal subset under `third_party/7zip-26.02/sdk`. `Common0.h` includes `NewHandler.h`; that header is vendored because MSVC cannot compile the adapter without it. `NewHandler.cpp` is not needed on VS2015+.
   - `lumina-7z-adapter.dll` is a versioned C ABI (v1). Engine loads it from an absolute sibling path with `LoadLibraryExW` + `LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR|SYSTEM32`. Adapter loads `7z.dll` the same way.
   - Handler discovery via `GetNumberOfFormats`/`GetHandlerProperty2`. Product-verified formats in G3: **7z** and **ZIP**. Others are `AVAILABLE_BACKEND` only.
   - G3 is Open/List/Test. `IArchiveExtractCallback::GetStream` never creates files. Safe Extract is G4.

@@ -9,23 +9,22 @@ int32_t map_hresult(HRESULT hr) {
   if (hr == E_OUTOFMEMORY) return LUMINA_7Z_INTERNAL;
   if (hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) || hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND))
     return LUMINA_7Z_IO_ERROR;
-  if (FAILED(HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED)) && hr == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED))
+  if (hr == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED))
     return LUMINA_7Z_IO_ERROR;
   if (hr == S_FALSE) return LUMINA_7Z_NOT_ARCHIVE;
   return LUMINA_7Z_ARCHIVE_OPEN_FAILED;
 }
 
 int32_t map_opres(Int32 op) {
-  using NArchive::NExtract::NOperationResult;
   switch (op) {
-    case NOperationResult::kOK: return LUMINA_7Z_OK;
-    case NOperationResult::kUnsupportedMethod: return LUMINA_7Z_UNSUPPORTED_METHOD;
-    case NOperationResult::kDataError: return LUMINA_7Z_DATA_ERROR;
-    case NOperationResult::kCRCError: return LUMINA_7Z_CRC_ERROR;
-    case NOperationResult::kUnexpectedEnd: return LUMINA_7Z_UNEXPECTED_END;
-    case NOperationResult::kHeadersError: return LUMINA_7Z_HEADER_ERROR;
-    case NOperationResult::kWrongPassword: return LUMINA_7Z_WRONG_PASSWORD;
-    case NOperationResult::kIsNotArc: return LUMINA_7Z_NOT_ARCHIVE;
+    case NArchive::NExtract::NOperationResult::kOK: return LUMINA_7Z_OK;
+    case NArchive::NExtract::NOperationResult::kUnsupportedMethod: return LUMINA_7Z_UNSUPPORTED_METHOD;
+    case NArchive::NExtract::NOperationResult::kDataError: return LUMINA_7Z_DATA_ERROR;
+    case NArchive::NExtract::NOperationResult::kCRCError: return LUMINA_7Z_CRC_ERROR;
+    case NArchive::NExtract::NOperationResult::kUnexpectedEnd: return LUMINA_7Z_UNEXPECTED_END;
+    case NArchive::NExtract::NOperationResult::kHeadersError: return LUMINA_7Z_HEADER_ERROR;
+    case NArchive::NExtract::NOperationResult::kWrongPassword: return LUMINA_7Z_WRONG_PASSWORD;
+    case NArchive::NExtract::NOperationResult::kIsNotArc: return LUMINA_7Z_NOT_ARCHIVE;
     default: return LUMINA_7Z_DATA_ERROR;
   }
 }

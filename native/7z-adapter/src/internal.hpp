@@ -9,18 +9,38 @@
 #define NOMINMAX
 #endif
 
+#include <windows.h>
+#include <objbase.h>
+#include <oleauto.h>
+#include <propidl.h>
+
 #include <atomic>
 #include <cstdint>
+#include <cstring>
 #include <mutex>
 #include <string>
 #include <vector>
 
 #include "lumina/seven_zip_abi.h"
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4100 4127 4514 4668 4865 5204)
+#endif
 #include "CPP/7zip/Archive/IArchive.h"
 #include "CPP/7zip/IPassword.h"
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 namespace lumina::sevenzip {
+
+/* 7-Zip interface methods use Z7_COM7F_E == throw(). Match that spec. */
+#if defined(_MSC_VER)
+#define L7Z_THROW throw()
+#else
+#define L7Z_THROW
+#endif
 
 inline constexpr uint32_t kSeekSet = 0;
 inline constexpr uint32_t kSeekCur = 1;
@@ -72,16 +92,18 @@ class FileInStream final : public IInStream {
   explicit FileInStream(HANDLE h) : h_(h) {}
   FileInStream(const FileInStream&) = delete;
   FileInStream& operator=(const FileInStream&) = delete;
+  virtual ~FileInStream();
 
   HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void** pp) override;
   ULONG STDMETHODCALLTYPE AddRef() override { return ++refs_; }
   ULONG STDMETHODCALLTYPE Release() override;
-  HRESULT STDMETHODCALLTYPE Read(void* data, UInt32 size, UInt32* processed) override;
-  HRESULT STDMETHODCALLTYPE Seek(Int64 offset, UInt32 seekOrigin, UInt64* newPosition) override;
+  HRESULT STDMETHODCALLTYPE Read(void* data, UInt32 size, UInt32* processed) L7Z_THROW override;
+  HRESULT STDMETHODCALLTYPE Seek(Int64 offset, UInt32 seekOrigin, UInt64* newPosition) L7Z_THROW override;
 
   static int32_t open_abs(const wchar_t* path, FileInStream** out);
 
  private:
+  void close_handle();
   std::atomic<ULONG> refs_{1};
   HANDLE h_ = INVALID_HANDLE_VALUE;
 };
@@ -89,6 +111,7 @@ class FileInStream final : public IInStream {
 class OpenCallback final : public IArchiveOpenCallback, public ICryptoGetTextPassword, public ICryptoGetTextPassword2 {
  public:
   OpenCallback(Bridge* bridge, Utf16Password* pw) : bridge_(bridge), pw_(pw) {}
+  virtual ~OpenCallback() = default;
 
   HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void** pp) override;
   ULONG STDMETHODCALLTYPE AddRef() override { return ++refs_; }
@@ -97,10 +120,10 @@ class OpenCallback final : public IArchiveOpenCallback, public ICryptoGetTextPas
     if (n == 0) delete this;
     return n;
   }
-  HRESULT STDMETHODCALLTYPE SetTotal(const UInt64* files, const UInt64* bytes) override;
-  HRESULT STDMETHODCALLTYPE SetCompleted(const UInt64* files, const UInt64* bytes) override;
-  HRESULT STDMETHODCALLTYPE CryptoGetTextPassword(BSTR* password) override;
-  HRESULT STDMETHODCALLTYPE CryptoGetTextPassword2(Int32* defined, BSTR* password) override;
+  HRESULT STDMETHODCALLTYPE SetTotal(const UInt64* files, const UInt64* bytes) L7Z_THROW override;
+  HRESULT STDMETHODCALLTYPE SetCompleted(const UInt64* files, const UInt64* bytes) L7Z_THROW override;
+  HRESULT STDMETHODCALLTYPE CryptoGetTextPassword(BSTR* password) L7Z_THROW override;
+  HRESULT STDMETHODCALLTYPE CryptoGetTextPassword2(Int32* defined, BSTR* password) L7Z_THROW override;
 
  private:
   std::atomic<ULONG> refs_{1};
@@ -112,6 +135,7 @@ class ExtractTestCallback final : public IArchiveExtractCallback, public ICrypto
  public:
   ExtractTestCallback(Bridge* bridge, Utf16Password* pw, UInt32 total_items)
       : bridge_(bridge), pw_(pw), total_items_(total_items) {}
+  virtual ~ExtractTestCallback() = default;
 
   HRESULT STDMETHODCALLTYPE QueryInterface(REFIID iid, void** pp) override;
   ULONG STDMETHODCALLTYPE AddRef() override { return ++refs_; }
@@ -120,13 +144,13 @@ class ExtractTestCallback final : public IArchiveExtractCallback, public ICrypto
     if (n == 0) delete this;
     return n;
   }
-  HRESULT STDMETHODCALLTYPE SetTotal(UInt64 total) override;
-  HRESULT STDMETHODCALLTYPE SetCompleted(const UInt64* completeValue) override;
-  HRESULT STDMETHODCALLTYPE GetStream(UInt32 index, ISequentialOutStream** outStream, Int32 askExtractMode) override;
-  HRESULT STDMETHODCALLTYPE PrepareOperation(Int32 askExtractMode) override;
-  HRESULT STDMETHODCALLTYPE SetOperationResult(Int32 opRes) override;
-  HRESULT STDMETHODCALLTYPE CryptoGetTextPassword(BSTR* password) override;
-  HRESULT STDMETHODCALLTYPE CryptoGetTextPassword2(Int32* defined, BSTR* password) override;
+  HRESULT STDMETHODCALLTYPE SetTotal(UInt64 total) L7Z_THROW override;
+  HRESULT STDMETHODCALLTYPE SetCompleted(const UInt64* completeValue) L7Z_THROW override;
+  HRESULT STDMETHODCALLTYPE GetStream(UInt32 index, ISequentialOutStream** outStream, Int32 askExtractMode) L7Z_THROW override;
+  HRESULT STDMETHODCALLTYPE PrepareOperation(Int32 askExtractMode) L7Z_THROW override;
+  HRESULT STDMETHODCALLTYPE SetOperationResult(Int32 opRes) L7Z_THROW override;
+  HRESULT STDMETHODCALLTYPE CryptoGetTextPassword(BSTR* password) L7Z_THROW override;
+  HRESULT STDMETHODCALLTYPE CryptoGetTextPassword2(Int32* defined, BSTR* password) L7Z_THROW override;
 
   int32_t worst_result() const { return worst_; }
 

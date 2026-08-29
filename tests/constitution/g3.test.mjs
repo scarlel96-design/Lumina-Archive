@@ -44,6 +44,7 @@ test("WinUI and shell still have no codec/parser", () => {
 test("G3 extraction callback does not create destination files", () => {
   const cb = read("native/7z-adapter/src/callbacks.cpp");
   assert.match(cb, /GetStream/);
+  assert.match(cb, /\*outStream = nullptr/);
   assert.equal(/CreateFileW/.test(cb), false);
   assert.equal(/CreateDirectoryW/.test(cb), false);
   assert.equal(/CreateSymbolicLink/.test(cb), false);
@@ -99,4 +100,45 @@ test("G3 fixtures documented", () => {
   assert.equal(existsSync(join(root, "tests/fixtures/g3/README.md")), true);
   assert.equal(existsSync(join(root, "tests/fixtures/g3/plain.7z")), true);
   assert.equal(existsSync(join(root, "tests/fixtures/g3/header-encrypted.7z")), true);
+});
+
+test("vendored 26.02 SDK includes NewHandler.h for MSVC Common0.h", () => {
+  const p = "third_party/7zip-26.02/sdk/CPP/Common/NewHandler.h";
+  assert.equal(existsSync(join(root, p)), true);
+  const h = read(p);
+  assert.match(h, /ZIP7_INC_COMMON_NEW_HANDLER_H/);
+  assert.match(h, /CNewException/);
+  const manifest = read("third_party/7zip-26.02/MANIFEST.md");
+  assert.match(manifest, /NewHandler\.h/);
+  const common0 = read("third_party/7zip-26.02/sdk/CPP/Common/Common0.h");
+  assert.match(common0, /#include "NewHandler\.h"/);
+});
+
+test("adapter C ABI exports no STL types", () => {
+  const abi = read("native/7z-adapter/include/lumina/seven_zip_abi.h");
+  assert.match(abi, /lumina_7z_adapter_get_api_v1/);
+  assert.match(abi, /LUMINA_7Z_ABI_VERSION 1u/);
+  assert.equal(/std::(string|vector|exception)/.test(abi), false);
+});
+
+test("G3 does not implement IOutArchive create/update", () => {
+  for (const p of [
+    "native/7z-adapter/src/archive_ops.cpp",
+    "native/7z-adapter/src/callbacks.cpp",
+    "native/engine/src/g3_job.cpp",
+  ]) {
+    const t = read(p);
+    assert.equal(/IOutArchive|UpdateItems/.test(t), false, p);
+  }
+});
+
+test("secure LoadLibraryExW is used for adapter and 7z.dll", () => {
+  const loader = read("native/7z-adapter/src/dll_loader.cpp");
+  assert.match(loader, /LoadLibraryExW/);
+  assert.match(loader, /LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR/);
+  assert.match(loader, /LOAD_LIBRARY_SEARCH_SYSTEM32/);
+  const job = read("native/engine/src/g3_job.cpp");
+  assert.match(job, /LoadLibraryExW/);
+  assert.match(job, /LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR/);
+  assert.equal(/LoadLibraryW\s*\(\s*L"lumina-7z-adapter/.test(job), false);
 });

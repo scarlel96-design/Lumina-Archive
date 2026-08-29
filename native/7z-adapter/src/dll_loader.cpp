@@ -1,5 +1,6 @@
 #include "internal.hpp"
 
+#include <cstring>
 #include <string>
 
 namespace lumina::sevenzip {
@@ -86,7 +87,7 @@ int32_t enumerate_handlers(std::vector<Handler>& out) {
     PropVariantInit(&v);
     if (g_dll.get_handler_property2(i, NArchive::NHandlerPropID::kClassID, &v) == S_OK) {
       if (v.vt == VT_BSTR && v.bstrVal && SysStringByteLen(v.bstrVal) >= sizeof(GUID))
-        memcpy(&h.clsid, v.bstrVal, sizeof(GUID));
+        std::memcpy(&h.clsid, v.bstrVal, sizeof(GUID));
     }
     clear_prop(v);
     PropVariantInit(&v);

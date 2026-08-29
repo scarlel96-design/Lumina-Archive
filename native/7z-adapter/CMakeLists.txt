@@ -19,7 +19,13 @@ if(WIN32)
     PUBLIC include
     PRIVATE "${LUMINA_7ZIP_SDK}"
   )
+  # ole32/oleaut32 for PropVariantClear / BSTR. Do not link uuid.lib while
+  # adapter_api.cpp defines INITGUID (would duplicate IID_IUnknown).
   target_link_libraries(lumina-7z-adapter PRIVATE ole32 oleaut32)
+  if(MSVC)
+    # 7-Zip interface methods use throw(); match them. C4290 is historical.
+    target_compile_options(lumina-7z-adapter PRIVATE /wd4290)
+  endif()
   set_target_properties(lumina-7z-adapter PROPERTIES OUTPUT_NAME "lumina-7z-adapter")
 
   add_executable(lumina-7z-adapter-test src/adapter_test.cpp)
