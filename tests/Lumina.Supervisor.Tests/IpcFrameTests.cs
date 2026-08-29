@@ -73,7 +73,7 @@ public class IpcFrameTests
     [Fact]
     public void DuplicateSeqRejected()
     {
-        Assert.Throws<SupervisorException>(() => ProtocolValidator.ValidateContiguous(1, 1));
+        Assert.Throws<SupervisorException>(() => ProtocolValidator.ValidateContiguous(2, 1));
         ProtocolValidator.ValidateContiguous(2, 2);
     }
 

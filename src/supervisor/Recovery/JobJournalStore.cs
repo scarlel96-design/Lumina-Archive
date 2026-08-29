@@ -6,6 +6,7 @@ namespace Lumina.Supervisor.Recovery;
 public sealed class JobJournalStore
 {
     private readonly string _root;
+    private readonly object _io = new();
     private static readonly JsonSerializerOptions Options = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
@@ -22,19 +23,22 @@ public sealed class JobJournalStore
 
     public void WriteAtomic(JobJournal journal)
     {
-        var path = PathFor(journal.JobId);
-        var tmp = path + ".tmp";
-        var json = JsonSerializer.Serialize(journal, Options);
-        var bytes = System.Text.Encoding.UTF8.GetBytes(json);
-        using (var fs = new FileStream(tmp, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.WriteThrough))
+        lock (_io)
         {
-            fs.Write(bytes);
-            fs.Flush(flushToDisk: true);
+            var path = PathFor(journal.JobId);
+            var tmp = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
+            var json = JsonSerializer.Serialize(journal, Options);
+            var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+            using (var fs = new FileStream(tmp, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.None))
+            {
+                fs.Write(bytes);
+                fs.Flush(flushToDisk: true);
+            }
+            if (File.Exists(path))
+                File.Replace(tmp, path, destinationBackupFileName: null);
+            else
+                File.Move(tmp, path);
         }
-        if (File.Exists(path))
-            File.Replace(tmp, path, destinationBackupFileName: null);
-        else
-            File.Move(tmp, path);
     }
 
     public JobJournal? TryRead(string jobId)
