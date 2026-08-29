@@ -12,6 +12,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lumina.Cli", "apps\cli\Lumi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lumina.Domain.Tests", "tests\Lumina.Domain.Tests\Lumina.Domain.Tests.csproj", "{A5555555-5555-5555-5555-555555555555}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lumina.Supervisor.Tests", "tests\Lumina.Supervisor.Tests\Lumina.Supervisor.Tests.csproj", "{A6666666-6666-6666-6666-666666666666}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -60,5 +62,13 @@ Global
 		{A5555555-5555-5555-5555-555555555555}.Debug|ARM64.Build.0 = Debug|Any CPU
 		{A5555555-5555-5555-5555-555555555555}.Release|ARM64.ActiveCfg = Release|Any CPU
 		{A5555555-5555-5555-5555-555555555555}.Release|ARM64.Build.0 = Release|Any CPU
+		{A6666666-6666-6666-6666-666666666666}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A6666666-6666-6666-6666-666666666666}.Debug|x64.Build.0 = Debug|Any CPU
+		{A6666666-6666-6666-6666-666666666666}.Release|x64.ActiveCfg = Release|Any CPU
+		{A6666666-6666-6666-6666-666666666666}.Release|x64.Build.0 = Release|Any CPU
+		{A6666666-6666-6666-6666-666666666666}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{A6666666-6666-6666-6666-666666666666}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{A6666666-6666-6666-6666-666666666666}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{A6666666-6666-6666-6666-666666666666}.Release|ARM64.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

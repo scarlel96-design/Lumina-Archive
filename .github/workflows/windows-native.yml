@@ -54,6 +54,9 @@ jobs:
       - name: Build Tests
         run: dotnet build tests/Lumina.Domain.Tests/Lumina.Domain.Tests.csproj -c Release --no-restore
 
+      - name: Build Supervisor tests
+        run: dotnet build tests/Lumina.Supervisor.Tests/Lumina.Supervisor.Tests.csproj -c Release --no-restore
+
       - name: Build WinUI skeleton
         run: dotnet build apps/win/Lumina.Win.csproj -c Release -p:Platform=x64 -p:RuntimeIdentifier=win-x64 --no-restore
 
@@ -80,6 +83,14 @@ jobs:
 
       - name: MSVC build lumina-bench-run (G1 helper, not product)
         run: cmake --build --preset windows-x64-release --target lumina-bench-run --config Release
+
+      - name: MSVC ARM64 build lumina-engine
+        run: cmake --build --preset windows-arm64-release --target lumina-engine --config Release
+
+      - name: Run Supervisor tests including G2 Windows integration
+        env:
+          LUMINA_ENGINE: ${{ github.workspace }}\build\win-x64-release\native\engine\Release\lumina-engine.exe
+        run: dotnet test tests/Lumina.Supervisor.Tests/Lumina.Supervisor.Tests.csproj -c Release --no-restore --no-build
 
       - name: Constitution tests
         run: node --test tests/constitution/g0.test.mjs

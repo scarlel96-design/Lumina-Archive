@@ -117,5 +117,18 @@ Format: date, status, context, decision, consequences.
 - Decision: G1 = PASS. Physical Windows Baseline = PASS. G2 Development Entry = READY. NOISY CV>5% flags stay in the record. Marketing Lumina-vs-Bandizip remains G5. Do not start G2 in the closure commit.
 - Consequences: Later G5 must reuse this machine fingerprint `fd10fb1bd6fbcd094e8a4b936440bf2456188d4b09a4b91abfa06e0bfcbd3dd4`, corpus pins, tool versions, thread budget, and harness protocol. Raw JSON on the lab PC remains authoritative for timings.
 
+## ADR-0015 — G2 Named Pipe IPC, Job Object containment, secret pipe
 
-
+- Date: 2026-08-29
+- Status: accepted
+- Context: G2 must prove process isolation and transport before any codec is linked.
+- Decision:
+  - Control IPC is local Named Pipe, `uint32le` + strict UTF-8 JSON, protocol version 1, 1 MiB max frame.
+  - Envelope requires `payload`. Sequence is contiguous per direction.
+  - Pipe ACL is current-user only. Client PID must match the launched worker on control and secret pipes.
+  - Worker is created `CREATE_SUSPENDED`, assigned to a Job Object with `KILL_ON_JOB_CLOSE` (and active-process 1), then resumed.
+  - Secret pipe is a one-shot binary frame (64 KiB max), wiped after use. No JSON library added; C++ uses a bounded envelope parser, C# uses `System.Text.Json`.
+  - Pause is cooperative (`paused`/`resumed` events). Heartbeat continues while paused. Watchdog uses `TimeProvider`.
+  - Journal is atomic snapshot JSON; Running/Paused recover as Interrupted.
+  - ResourceGovernor is a FIFO global lease, not a hard Job Object memory kill.
+- Consequences: G3 may pass secrets into 7z.dll callbacks over this pipe. G2 Windows integration is required for full PASS. Linux preview remains dashboard-only.

@@ -61,3 +61,22 @@ selection paths are untrusted.**
 - Replacing Windows Defender
 - Password recovery (deferred)
 - AppContainer brokered I/O (High Assurance milestone, not G0–G6)
+
+## G2 threats and mitigations
+
+| Threat | Mitigation | Residual |
+|---|---|---|
+| Malicious same-user pipe client | Current-user ACL + `GetNamedPipeClientProcessId` vs launched PID | Same-PID spoof requires already-compromised worker |
+| Remote named-pipe access | Local pipe, no remote ACE, no network listener | Admin/kernel bypass |
+| Oversized frame | 1 MiB cap before allocate | None material |
+| Malformed UTF-8/JSON | Strict decode, fail closed | None material |
+| Sequence replay/gap | Contiguous seq per direction | Lost frames fail the job |
+| Wrong job ID | Envelope `job_id` must match connection | None material |
+| Secret leakage | Separate pipe, no argv/env/journal/logs, zero memory | Crash dumps still OS-controlled |
+| Worker escape/orphan | Job Object KILL_ON_JOB_CLOSE, active-process 1 | Debugger-created processes outside job |
+| Heartbeat stall | Watchdog → Interrupted + job terminate | Clock attack on injected TimeProvider in tests only |
+| Journal corruption | Atomic replace, quarantine, never Succeeded | Disk-full during replace |
+| Terminal-state race | Single lock, immutable terminal | None material |
+| Resource starvation | FIFO leases, oversized fail-fast, cancel waiter | Pathological many waiters |
+
+G2 does not parse archives. Archive-byte threats remain G3/G4.

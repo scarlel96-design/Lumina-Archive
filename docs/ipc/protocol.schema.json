@@ -2,13 +2,16 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Lumina engine IPC frame",
   "type": "object",
-  "required": ["protocol_version", "job_id", "seq", "kind", "type"],
+  "required": ["protocol_version", "job_id", "seq", "kind", "type", "payload"],
   "properties": {
     "protocol_version": { "type": "integer", "const": 1 },
     "job_id": { "type": "string", "minLength": 1 },
     "seq": { "type": "integer", "minimum": 0 },
     "kind": { "enum": ["command", "event"] },
-    "type": { "type": "string" },
+    "type": {
+      "type": "string",
+      "enum": ["start", "pause", "resume", "cancel", "shutdown", "accepted", "progress", "heartbeat", "paused", "resumed", "completed", "failed", "cancelled"]
+    },
     "payload": { "type": "object" }
   },
   "additionalProperties": false

@@ -46,6 +46,9 @@ public static class JobStateMachine
         (JobState.Paused, JobState.Cancelled) => true,
         (JobState.Queued, JobState.Cancelled) => true,
         (JobState.Running, JobState.Interrupted) => true,
+        (JobState.Paused, JobState.Interrupted) => true,
+        (JobState.Queued, JobState.Interrupted) => true,
+        (JobState.Paused, JobState.Failed) => true,
         _ => false
     };
 }

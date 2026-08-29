@@ -1,9 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <Description>Worker spawn, Job Object, IPC, budgets. Implementation starts G2.</Description>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Description>Worker spawn, Job Object, IPC, budgets. G2 production foundation.</Description>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\domain\Lumina.Domain.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Lumina.Supervisor.Tests" />
   </ItemGroup>
 </Project>

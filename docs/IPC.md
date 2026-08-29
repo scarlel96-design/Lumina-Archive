@@ -1,22 +1,138 @@
-# IPC contract (G2 lands the implementation)
+# IPC contract (G2)
 
-Production control channel: local Named Pipe, length-prefixed UTF-8 JSON.
-Schema file: [`docs/ipc/protocol.schema.json`](ipc/protocol.schema.json).
+Production control channel is a **local Windows Named Pipe**. It is not a
+WebSocket, not a browser worker, and not a Node child_process.
+
+## Framing
 
 ```
 uint32le frame_len | utf8 json object
 ```
 
-Required fields: `protocol_version` (1), `job_id`, `seq`, `kind` (`command` or
-`event`), `type`, `payload`.
+- Little-endian payload length, then exactly N UTF-8 JSON bytes.
+- Maximum control frame: **1 MiB**.
+- `length == 0` is invalid.
+- `length > MAX` is invalid. Do not allocate attacker-controlled sizes.
+- Short header or short body is `MalformedFrame`.
+- UTF-8 is **strict** (C# `UTF8Encoding(false, throwOnInvalidBytes: true)`;
+  C++ rejects overlong/surrogate/truncated sequences). Invalid UTF-8 is
+  `InvalidUtf8`, never a replacement parse.
+- JSON is strict: no comments, no trailing commas, envelope
+  `additionalProperties=false`.
+- `payload` is **required**. Empty payload is `{}`.
 
-Commands (supervisor → engine): `start`, `pause`, `resume`, `cancel`,
-`shutdown`.
+Schema: [`docs/ipc/protocol.schema.json`](ipc/protocol.schema.json).
 
-Events (engine → supervisor): `accepted`, `progress`, `heartbeat`,
-`completed`, `failed`, `cancelled`.
+## Envelope
 
-Secret pipe: separate name `{job_id}.secret`, one message, then close.
-Never echo secrets on the control pipe.
+All six fields are mandatory:
 
-7zz CLI is not this contract. It is a no-secret bench fallback only.
+`protocol_version` (exactly `1`), `job_id`, `seq`, `kind` (`command`|`event`),
+`type`, `payload`.
+
+Unknown protocol versions fail job startup (`ProtocolVersionUnsupported`)
+and close the connection. No heuristic parsing.
+
+## Sequence
+
+`seq` is monotonic and **contiguous per direction**.
+
+- Supervisor commands: 0, 1, 2, …
+- Engine events: 0, 1, 2, …
+
+Duplicate, gap, or decrease is `SequenceViolation`. The two directions do
+not share a counter.
+
+Acknowledgements (`accepted`, `paused`, `resumed`, `cancelled`) include
+`{"command_seq": N}` in payload. Do not use timestamps as correlation IDs.
+
+## Direction
+
+Supervisor → engine commands: `start`, `pause`, `resume`, `cancel`, `shutdown`.
+
+Engine → supervisor events: `accepted`, `progress`, `heartbeat`, `paused`,
+`resumed`, `completed`, `failed`, `cancelled`.
+
+Wrong direction is `EnvelopeInvalid`. Pause is **not** observable until the
+worker emits `paused`. Resume is not Running until `resumed`.
+
+## Pipe names
+
+`LuminaArchive.v1.{job-guid}.control`
+`LuminaArchive.v1.{job-guid}.secret`
+
+Windows path: `\\.\pipe\` + name.
+
+Names never include archive filename, destination, username, password, or
+user-entered text. Job GUID is not a secret.
+
+## Security
+
+- Local Named Pipes only. Current-user SID ACL (`ReadWrite` + create instance).
+  Not Everyone-writable. Remote clients are not granted access.
+- After connect, Supervisor requires
+  `GetNamedPipeClientProcessId == launched worker PID` on **both** pipes.
+  Mismatch: disconnect, fail job, terminate contained worker
+  (`PipePeerMismatch`).
+
+## Launch order
+
+Create pipe servers → `CreateProcessW` **CREATE_SUSPENDED** → Job Object with
+`JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE` (+ active process limit 1) →
+`AssignProcessToJobObject` and verify → `ResumeThread` → wait connect + PID
+check. Never `Process.Start` then assign.
+
+Pause is cooperative IPC. `SuspendThread` / `NtSuspendProcess` are forbidden.
+
+## Secret pipe
+
+Binary one-shot frame: `uint32le length | raw bytes`. Max **64 KiB**.
+
+One connection, one message, then close. No JSON. No retry loop. Wrong PID,
+zero length when required, oversize, partial, or second frame:
+`SecretFrameInvalid`.
+
+Secrets never enter argv, environment, control JSON, journal, logs, or
+exception messages. C# uses `SecretBuffer` + `CryptographicOperations.ZeroMemory`.
+C++ uses `SecureZeroMemory` after G2 consumption. G3 will pass bytes into
+7z.dll callbacks; G2 does not.
+
+## Heartbeat / watchdog
+
+Engine emits `heartbeat` about every 1s while alive, **including while
+cooperatively paused**. Stale after 5s: graceful cancel/shutdown, 2s grace,
+then terminate Job Object. Final state `Interrupted` with
+`HeartbeatTimeout` / `WorkerExitedUnexpectedly` / `ProtocolBroken`.
+
+Unexpected process exit without a prior terminal event is `Interrupted`,
+not `Failed`. A normal exit **after** `completed`/`failed`/`cancelled` must
+not rewrite the terminal state.
+
+## Terminal races
+
+Terminal states: Succeeded, Failed, Cancelled, Interrupted. Immutable.
+
+`completed` committed first wins over a late cancel. Cancel is idempotent:
+`Accepted` / `AlreadyRequested` / `AlreadyTerminal` / `NotFound`.
+
+## Journal
+
+Atomic snapshot JSON (temp + `Flush(true)` + replace). No secrets. Restart:
+Running/Paused → Interrupted. Other states preserved. Corrupt/truncated
+JSON is quarantined and `JournalCorrupt` — never Succeeded.
+
+## Resource grants
+
+`start.payload.grant` carries **granted** CPU/RAM/I/O/preview limits from
+`ResourceGovernor`, not the caller's unbounded request.
+
+## Errors
+
+`ProtocolVersionUnsupported`, `FrameTooLarge`, `MalformedFrame`,
+`InvalidUtf8`, `InvalidJson`, `EnvelopeInvalid`, `SequenceViolation`,
+`JobIdMismatch`, `PipePeerMismatch`, `SecretFrameInvalid`,
+`WorkerLaunchFailed`, `WorkerExitedUnexpectedly`, `HeartbeatTimeout`,
+`JournalCorrupt`, `ResourceRequestTooLarge`.
+
+Logs may include job ID, type, seq, PID, state, failure code. They must not
+dump secrets or wholesale control JSON.
